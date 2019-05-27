@@ -23,12 +23,12 @@ Provides a single language agnostic acces point to the swarm. This will typicall
 Querying is going to be REST or GraphQL
 
 ### Swarm manager
-The swarm manager is responsible for managing the bots. It does all the descision making for the swarm but will offload computation heavy stuff to the Swarm nodes. It is also going to act as a load balancer / reverse proxy.
+The swarm manager is a cluster-wide scheduler, load balancer, and reverse proxy. Its role is to spawn swarm nodes, assign them new bots, route requests, and hold a cartography.
 
 ### Swarm node
-Each node is localized on a physical host and it's responsibility is to forward orders coming from the swarm manager to the appropriate bot. It may eventually offload the swarm manager of some processing (e.g. pathfinding). The common assets for all the bots are also loaded there at the host level. It means these are common for all the bot instances on this node, which greatly reduces the memory footprint, allowing us to run more bots on the same machine.
+Each node is localized on a physical host and its responsibility is to spawn clients and forward orders coming from the swarm manager to the appropriate one. The common assets for all the bots are also loaded there at the host level. It means these are common for all the bot instances (clients) on this node, which greatly reduces the memory footprint, allowing us to run more bots on the same machine. It also holds a local cartography.
 
-This is going to be as slim as possible, essentially only forwarding messages with the exception of when the order requires processing power.
+This is going to be as slim as possible, essentially only forwarding messages with.
 
 It exposes an API using JSON over websocket to provide a high level entry point to use the bots.
 
@@ -42,7 +42,12 @@ Read only assets which only need to be loaded once. This includes maps, items, e
 Assets that may be updated by a bot as it does its thing. This includes bot information, treasure hunt clues, known paths, etc.
 
 ### Clients 
-The websocket clients. Very slim.
+The clients embark most of the processing. They take orders from their parent swarm node and translate them into a series of commands edible by the low level API.
+
+They embark three main components:
+- The processor: transforms json orders into a plan to be executed by the commander
+- The commander: spawns and sends orders to the API.
+- The listener: holds the game state, which is basically everything from the point of view of the bot. This game state is the source of truth about the bot's environnement. The listener recieves all the data the API sends it and updates the game state with it.
 
 ### Bot API
 Uses JSON over websocket. This is the translator between the game and the rest of the code. It parses the data packets from the game to JSON and vice-versa.
