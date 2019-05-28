@@ -1,56 +1,32 @@
-from client import listener, dummy_api
-import asyncio
-import websockets
+from queue import Queue
 from threading import Thread
-import time
+
+from client.ws_wrapper import Connection
+from client.listener import Listener
+from tools import logger
+
 
 class Commander:
-    def __init__(self, bot: dict):
+    def __init__(self, bot):
+        self.logger = logger.get_logger(__name__, bot['name'])
         self.bot = bot
-        self.api = dummy_api
-        self.new_order = False
-        self.order = None
-        Thread(target=dummy_api.start_server, args=(self.bot['id'], )).start()
-        self.connection = asyncio.get_event_loop().run_until_complete(websockets.connect('ws://localhost:{}'.format(self.bot['id'] + 1000)))
-        asyncio.get_event_loop().run_until_complete(self.handler())
+        self.logger.info('Starting listener')
+        self.listener = Listener(bot)
+        self.orders_queue = Queue()
+        self.logger.info('Starting connector')
+        self.connection = Thread(target=Connection, args=(bot, self.orders_queue, self.listener.output_queue))
+        self.connection.start()
 
-    async def handler(self):
-        consumer_task = asyncio.ensure_future(self.consumer_handler())
-        producer_task = asyncio.ensure_future(self.producer_handler())
-        done, pending = await asyncio.wait([consumer_task, producer_task], return_when=asyncio.FIRST_COMPLETED)
-        for task in pending:
-            task.cancel()
+    def send_order(self, processed_order):
+        self.orders_queue.put((processed_order, ))
 
-    async def consumer_handler(self):
-        while True:
-            message = await self.connection.recv()
-            await self.consumer(message)
-
-    async def producer_handler(self):
-        while True:
-            message = await self.producer()
-            await self.connection.send(message)
-
-    async def consumer(self, message):
-        print(message)
-
-    async def producer(self):
-        while not self.new_order:
-            time.sleep(0.1)
-        self.new_order = False
-        return self.order
-
-    def send_order(self, order):
-        self.order = order
-        self.new_order = True
 
 if __name__ == '__main__':
-    commander = Commander({'id': 0})
+    bot = {'id': 0, 'name': 'Ilancelet'}
     order = {
         'version': 1,
         'command': 'Close',
     }
-    commander.send_order(str(order).encode('utf8'))
-    time.sleep(1)
-    commander.send_order(str(order).encode('utf8'))
+    commander = Commander(bot)
 
+    commander.send_order(order)
