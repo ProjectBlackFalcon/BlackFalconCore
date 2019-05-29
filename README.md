@@ -54,3 +54,26 @@ Uses JSON over websocket. This is the translator between the game and the rest o
 
 ### Bot
 The actual bot in-game.
+
+## The chain of command
+
+We need to define the way we want to give orders to bots. We want to be able to:
+ - Issue arbitrarily high level commands such a 'goto', 'craft', 'chat', or even 'play'...
+ - Be able to closely follow the execution of these commands through the thorough validation of each atomic order.
+ 
+ ### Block diagram detailing the chain of command
+ 
+ ![lel](https://trello-attachments.s3.amazonaws.com/5ce57f181041ba0b5ae4c693/5ce962d91c07d78f9cb266b7/cac93370d5ab8d48efff3cfe0e1a6000/Command_chain.drawio.svg)
+ 
+ It is very clear here that the Swarm Manager and the Swarm Node are only routing the command to the proper client.
+ 
+ We implement several levels of command: 
+ - Strategy: highest level of command. Strategies are human-oriented. Example of strategies are 'harvest fish', 'collect data', 'chat with people', 'craft items'...
+ - Tactic: a strategy broken down into a list of successive atomic orders associated with an expected result.
+ - Order: the lowest level a command. This is what the bot API accepts as an input. An order always have an expected result (an alteration of the game state).
+ 
+ ### Concurrency diagram of the chain of command
+ 
+ ![lel](https://trello-attachments.s3.amazonaws.com/5ce57f181041ba0b5ae4c693/5ce962d91c07d78f9cb266b7/9fe111b8bc92ec4246e22a0b8b1316d8/Comman_concurrency_diagram.drawio.svg)
+ 
+ Note: the API actually continuously streams data to the Listener, not only after an order is issued, I just can't do UML and don't know how to represent that.
