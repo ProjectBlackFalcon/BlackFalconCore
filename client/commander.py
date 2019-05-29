@@ -2,7 +2,7 @@ import queue
 from threading import Thread
 
 from client.processor import Processor
-from client.ws_wrapper import Connection
+from tools.ws_wrapper import Connection
 from client.listener import Listener
 from tools import logger
 
@@ -18,7 +18,7 @@ class Commander:
         self.listener = Listener(bot)
         self.logger.info('Starting connector')
         self.orders_queue = queue.Queue()
-        self.connection = Thread(target=Connection, args=(bot, self.orders_queue, self.listener.output_queue))
+        self.connection = Thread(target=Connection, args=('localhost', bot['id'] + 1000, self.orders_queue, self.listener.output_queue, bot))
         self.connection.start()
 
     def run(self):
@@ -29,6 +29,13 @@ class Commander:
 
     def execute_tactic(self, tactic):
         for (order, expected_result) in tactic:
+            #  Possible orders:
+            #   - Transmit: send the order to the API
+            #   - Wait for: just wait for the expected game state without doing anything beforehand.
+            # For example waiting for your turn in combat or waiting for an exchange request after entering a map.
+            #   - Reevaluate tactic: adapt the plan according to the changing game state.
+            # For example, a reevaluation is necessary after performing an FM action depending on the result of this FM.
+
             self.send_order(order)
             success, acutal_result = self.validate_result(expected_result)
             if not success:
