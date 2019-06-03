@@ -1,14 +1,12 @@
 import asyncio
 import websockets
 import ast
-import time
 
 
 async def hello(websocket, path):
     async for order in websocket:
-        order = ast.literal_eval(order)
-        greeting = "Recieved order : " + str(order)
-        await websocket.send(str(greeting))
+        print('API received order')
+        await websocket.send(order)
         print('API sent back response')
 
 
