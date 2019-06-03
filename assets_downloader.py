@@ -19,7 +19,8 @@ def generate_file_md5(path, blocksize=2**20):
 def create_assets_checksums():
     checksums = {}
     for file in os.listdir('assets'):
-        checksums[file.replace('.json', '')] = generate_file_md5('assets/' + file)
+        if file.endswith('.json'):
+            checksums[file.replace('.json', '')] = generate_file_md5('assets/' + file)
     return checksums
 
 
@@ -35,11 +36,13 @@ def get_files_to_update(mongo_checksums, local_checksums):
             files_to_update.append(filename)
     return files_to_update
 
+
 def download_file(client, filename):
     print('Downloading ' + filename)
     data = client.blackfalcon.files.find_one({'filename': filename})
     with open('assets/' + filename + '.json', 'w', encoding='utf8') as f:
         json.dump(data['payload'], f, ensure_ascii=False)
+
 
 def update_assets():
     client = pymongo.MongoClient(
@@ -55,6 +58,7 @@ def update_assets():
     files_to_update = get_files_to_update(mongo_checksums, local_checksums)
 
     [download_file(client, filename) for filename in files_to_update]
+
 
 if __name__ == '__main__':
     update_assets()
