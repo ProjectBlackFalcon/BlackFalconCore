@@ -1,3 +1,4 @@
+import time
 from queue import Queue
 from tools import logger
 import json
@@ -21,11 +22,14 @@ class Listener:
         }
         self.game_state = json.loads(json.dumps(self._game_state))
 
-    def listener(self):
+    def run(self):
         while 1:
             data = self.output_queue.get()
+            self.logger.info('Listener received {}'.format(data))
             self.update_game_state(data)
             self.game_state = json.loads(json.dumps(self._game_state))
 
     def update_game_state(self, data):
-        pass
+        self.logger.info('Updating game state')
+        if data[0] == 'ping':
+            self._game_state['ping'] = time.time()
