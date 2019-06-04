@@ -63,17 +63,16 @@ We need to define the way we want to give orders to bots. We want to be able to:
  
  ### Block diagram detailing the chain of command
  
- ![lel](https://trello-attachments.s3.amazonaws.com/5ce57f181041ba0b5ae4c693/5ce962d91c07d78f9cb266b7/cac93370d5ab8d48efff3cfe0e1a6000/Command_chain.drawio.svg)
+ ![lel](https://trello-attachments.s3.amazonaws.com/5ce57f181041ba0b5ae4c693/5ce962d91c07d78f9cb266b7/283c0b53b7cdd34006c7a59616c74ae0/Command_chain.drawio.svg)
  
  It is very clear here that the Swarm Manager and the Swarm Node are only routing the command to the proper client.
  
  We implement several levels of command: 
- - Strategy: highest level of command. Strategies are human-oriented. Example of strategies are 'harvest fish', 'collect data', 'chat with people', 'craft items'...
- - Tactic: a strategy broken down into a list of successive atomic orders associated with an expected result.
- - Order: the lowest level a command. This is what the bot API accepts as an input. An order always have an expected result (an alteration of the game state).
+ - Strategy: highest level of command. Strategies are human-oriented. Example of strategies are 'harvest fish', 'collect data', 'chat with people', 'craft items'... Strategies come with parameters, for example a goto will require target coordinates. Strategies can be dependant on each others, for example, a bot that harvests resources has to be able to make gotos, which are defined by a strategy.
+ - Order: lowest level of command. This is what the bot API accepts as an input. An order always has an expected result (i.e. an alteration of the game state).
  
  ### Concurrency diagram of the chain of command
  
- ![lel](https://trello-attachments.s3.amazonaws.com/5ce57f181041ba0b5ae4c693/5ce962d91c07d78f9cb266b7/9fe111b8bc92ec4246e22a0b8b1316d8/Comman_concurrency_diagram.drawio.svg)
+ ![lel](https://trello-attachments.s3.amazonaws.com/5ce57f181041ba0b5ae4c693/5ce962d91c07d78f9cb266b7/5fa00ecb568338003000ae87a334320c/Comman_concurrency_diagram.drawio.svg)
  
  Note: the API actually continuously streams data to the Listener, not only after an order is issued, I just can't do UML and don't know how to represent that.
