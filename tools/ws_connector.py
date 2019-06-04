@@ -10,6 +10,8 @@ from tools import logger
 
 class Connection:
     def __init__(self, host, port, orders_queue, output_queue, bot=None):
+        self.host = host
+        self.port = port
         self.logger = logger.get_logger(__name__, bot['name'] if bot is not None else 'Connection-{}-{}'.format(host, port))
         self.orders_queue = orders_queue
         self.output_queue = output_queue
@@ -27,7 +29,7 @@ class Connection:
         self.logger.error(error)
 
     def on_close(self):
-        self.logger.info("Websocket closed")
+        self.logger.info("Websocket at {} closed".format(self.connection_string))
 
     def on_open(self):
         self.logger.info('Connection established to websocket at ' + self.connection_string)
