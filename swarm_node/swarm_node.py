@@ -35,14 +35,13 @@ class SwarmNode:
         if message['bot']['id'] not in self.cartography.keys():
             self.logger.info('Bot is not running. Starting commander for {}'.format(message['bot']['name']))
             self.spawn_commander(json.loads(json.dumps(message['bot'])))
-        self.logger.info('Adding strategy {} to {}'.format(message, message['bot']['name']))
+        self.logger.info('Adding strategy to {}: {}'.format(message['bot']['name'], message))
         self.cartography[message['bot']['id']]['strategies_queue'].put(message)
 
     def reports_listener(self):
         while 1:
             report = self.report_queue.get()
-            self.logger.info('New report: {}'.format(report))
-            print(self.cartography)
+            self.logger.info('New report from {}: {}'.format(report['bot']['name'], report))
             client = self.cartography['messages'].pop(report['id'])
             self.api.send_message(client, str(report))
 
