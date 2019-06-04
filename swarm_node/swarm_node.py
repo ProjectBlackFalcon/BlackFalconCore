@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 import queue
 import time
 import uuid
@@ -14,6 +15,8 @@ from tools import logger
 class SwarmNode:
     def __init__(self, host):
         self.logger = logger.get_logger(__name__, 'swarm_node')
+        self.assets = {}
+        self.load_assets()
         self.host = host
         self.api_port = 8721
         self.api = WebsocketServer(self.api_port, host=self.host)
@@ -25,6 +28,23 @@ class SwarmNode:
         self.reports_thread = Thread(target=self.reports_listener)
         self.reports_thread.start()
         self.cartography = {'messages': {}}
+
+    def load_assets(self):
+        start = time.time()
+        self.logger.info('Loading static assets...')
+        assets_paths = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets'))
+        for file in os.listdir(assets_paths):
+            if file.endswith('.json'):
+                self.logger.info('Loading asset: {}'.format(file))
+                with open(assets_paths + '/' + file, 'r', encoding='utf8') as f:
+                    if 'map_info' in file:
+                        if '_0' in file:
+                            self.assets['map_info'] = json.load(f)
+                        else:
+                            self.assets['map_info'].append(json.load(f))
+                    else:
+                        self.assets[file.replace('.json', '')] = json.load(f)
+        self.logger.info('Done loading assets in {}s'.format(round(time.time() - start, 2)))
 
     def api_on_message(self, client, server, message):
         self.logger.info('Recieved from {}: {}'.format(client['address'], message))
@@ -48,7 +68,7 @@ class SwarmNode:
     def spawn_commander(self, bot: dict):
         self.cartography[bot['id']] = bot
         self.cartography[bot['id']].update({'strategies_queue': queue.Queue()})
-        self.cartography[bot['id']].update({'thread': Thread(target=Commander, args=(bot, self.cartography[bot['id']]['strategies_queue'], self.report_queue))})
+        self.cartography[bot['id']].update({'thread': Thread(target=Commander, args=(bot, self.cartography[bot['id']]['strategies_queue'], self.report_queue, self.assets))})
         self.cartography[bot['id']]['thread'].start()
 
 
