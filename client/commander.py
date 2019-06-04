@@ -1,12 +1,10 @@
-import ast
 import queue
-import time
 from threading import Thread
 
-from client.processor import Processor
-from tools.ws_wrapper import Connection
+from tools.ws_connector import Connection
 from client.listener import Listener
 from tools import logger
+import strategies
 
 
 class Commander:
@@ -15,8 +13,6 @@ class Commander:
         self.bot = bot
         self.strategies_queue = strategies_queue
         self.reports_queue = reports_queue
-        self.logger.info('Starting processor')
-        self.processor = Processor()
         self.logger.info('Starting listener')
         self.listener = Listener(bot)
         self.logger.info('Starting connector')
@@ -29,31 +25,28 @@ class Commander:
     def run(self):
         while 1:
             strategy = self.strategies_queue.get()
-            self.logger.info('Received strategy: {}'.format(strategy))
+            self.logger.info('Received strategy from swarm node: {}'.format(strategy))
             self.execute_strategy(strategy)
 
     def execute_strategy(self, strategy):
-        if strategy['command'] == 'ping':
-            self.logger.info('Executing ping strategy')
-            last_ping = self.listener.game_state['ping'] if 'ping' in self.listener.game_state.keys() else 0
-            print('Last ping: ', last_ping)
-            self.send_order('ping')
-            waiting = True
-            while waiting:
-                if 'ping' in self.listener.game_state.keys():
-                    if last_ping != self.listener.game_state['ping']:
-                        waiting = False
-                time.sleep(0.1)
-            self.logger.info('Received pong response')
-            strategy['report'] = True
-            self.reports_queue.put(strategy)
+        kwargs = {'strategy': strategy, 'listener': self.listener, 'orders_queue': self.orders_queue}
+        report = strategy
+        if hasattr(strategies, strategy['command']) and hasattr(getattr(strategies, strategy['command']), strategy['command']):
+            self.logger.info('Starting executor for strategy: {}'.format(strategy))
+            report = getattr(getattr(strategies, strategy['command']), strategy['command'])(**kwargs)
+        else:
+            self.logger.warn('No known strategy named \'{}\''.format(strategy['command']))
+            report['report'] = {
+                'success': False,
+                'details': 'No known strategy named \'{}\''.format(strategy['command'])
+            }
+
+        self.logger.info('Sending back report to swarm node: {}'.format(report))
+        self.reports_queue.put(report)
 
     def send_order(self, order):
-        self.logger.info('Sending order : {}'.format(order))
+        self.logger.info('Sending order to bot API: {}'.format(order))
         self.orders_queue.put((order, ))
-
-    def validate_result(self, expected_result):
-        return False, None
 
 
 if __name__ == '__main__':
