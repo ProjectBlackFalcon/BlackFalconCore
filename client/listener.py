@@ -23,6 +23,7 @@ class Listener:
         self.game_state = json.loads(json.dumps(self._game_state))
 
     def run(self):
+        self.logger.info('Starting listening for game state changes')
         while 1:
             data = self.output_queue.get()
             self.logger.info('Listener received {}'.format(data))

@@ -1,3 +1,5 @@
+import json
+import os
 import queue
 from threading import Thread
 
@@ -8,18 +10,20 @@ import strategies
 
 
 class Commander:
-    def __init__(self, bot, strategies_queue: queue.Queue, reports_queue: queue.Queue):
+    def __init__(self, bot, strategies_queue: queue.Queue, reports_queue: queue.Queue, assets):
         self.logger = logger.get_logger(__name__, bot['name'])
         self.bot = bot
         self.strategies_queue = strategies_queue
         self.reports_queue = reports_queue
+        self.assets = assets
         self.logger.info('Starting listener')
         self.listener = Listener(bot)
+        Thread(target=self.listener.run).start()
         self.logger.info('Starting connector')
         self.orders_queue = queue.Queue()
         self.connection = Thread(target=Connection, args=('localhost', bot['id'] + 1000, self.orders_queue, self.listener.output_queue, bot))
         self.connection.start()
-        Thread(target=self.listener.run).start()
+        self.logger.info('New commander spawned for {}'.format(bot['name']))
         self.run()
 
     def run(self):

@@ -32,7 +32,7 @@ class Connection:
         self.logger.info("Websocket at {} closed".format(self.connection_string))
 
     def on_open(self):
-        self.logger.info('Connection established to websocket at ' + self.connection_string)
+        self.logger.info('Connection established to websocket at ' + self.connection_string + ', ready to send orders')
 
         def run(queue):
             while 1:
