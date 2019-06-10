@@ -78,27 +78,44 @@ def mongo_client():
         host=credentials['mongo']['host'],
         port=credentials['mongo']['port'],
         username=credentials['mongo']['username'],
-        password=credentials['mongo']['password']
+        password=credentials['mongo']['password'],
     )
 
 
-def get_profile(bot, assets):
-    client = mongo_client()
+def create_profile(id, bot_name, username, password, server):
+    if mongo_client().blackfalcon.bots.find_one({'name': bot_name}) is not None:
+        raise Exception('Bot already exists. Delete it using the \'delete_bot\' command first.')
+    profile = {
+        'id': id,
+        'name': bot_name,
+        'username': username,
+        'password': password,
+        'server': server,
+        'known_zaaps': [],
+        'sub_end': 0,
+        'position': (69, 420),
+        'banned': False,
+        'stuff': {},
+        'stats': {},
+    }
+    mongo_client().blackfalcon.bots.insert_one(profile)
 
-    profile = client.blackfalcon.bots.find_one({'name': bot['name']})
+
+def delete_profile(bot_name):
+    mongo_client().blackfalcon.bots.delete_one({'name': bot_name})
+
+
+def get_profile(bot_name):
+    client = mongo_client()
+    profile = client.blackfalcon.bots.find_one({'name': bot_name})
     if profile is None:
-        profile = json.loads(json.dumps(assets['blank_bot_profile']))
-        profile['name'] = bot['name']
-        profile['username'] = bot['username']
-        profile['password'] = bot['password']
-        profile['server'] = bot['server']
-        client.blackfalcon.bots.insert_one(profile)
+        raise Exception('Bot does not exist. Create a profile using the \'new_bot\' command first.')
     return profile
 
 
 def update_profile(bot_name, new_profile):
     client = mongo_client()
-    client.blackfalcon.bots.find_one_and_replace({'name': bot_name}, new_profile)
+    client.blackfalcon.bots.update_one({'name': bot_name}, new_profile)
 
 
 def get_known_zaaps(bot_name):
