@@ -1,17 +1,49 @@
 import json
 import time
 
+import strategies
 from tools import logger as log
 
 
 def use_zaap(**kwargs):
+    """
+    Uses a zaap to get to a specified destination
+    The bot must be on a map with a zaap
+    This strategy will move the bot to an appropriate cell to use the zaap
+
+    :param kwargs:
+    :return: report
+    """
     strategy = kwargs['strategy']
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
+    assets = kwargs['assets']
 
     logger = log.get_logger(__name__, strategy['bot']['name'])
+    start, global_start = time.time(), time.time()
 
-    # TODO: check that the player is besides a zaap activable
+    # TODO: Check that the map has a zaap
+
+    # Move the bot the appropriate cell to activate the zaap
+    current_cell = listener.game_state['cell']
+    current_map = listener.game_state['pos']
+    zaap_cell = None  # TODO
+    zaap_use_cell = strategies.support_functions.get_closest_walkable_neighbour_cell(assets['map_info'], zaap_cell, current_cell, current_map, current_cell)
+    report = strategies.move(
+        listener=listener,
+        strategy={'bot': strategy['bot'], 'parameters': {'cell': zaap_use_cell}},
+        orders_queue=orders_queue
+    )
+    if not report['success']:
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': time.time() - start, 'Reason': 'Move to get to zaap failed'}
+        }
+
+    # TODO: Activate the zaap
+    # TODO: Check that the bot has sufficient funds
+    # TODO: Check that the bot knows the destination's zaap
+    # TODO: Use it to go to destination
 
     zaap_id = 0  # TODO: get zaap id from listener
     bot_strategy = {
