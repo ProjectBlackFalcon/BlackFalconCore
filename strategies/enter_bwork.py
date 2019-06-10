@@ -5,9 +5,9 @@ from tools import logger as log
 import strategies
 
 
-def exit_brak_north(**kwargs):
+def enter_bwork(**kwargs):
     """
-    A strategy to exit Brak using the north interactive.
+    A strategy to enter bwork village.
 
     :param kwargs: strategy, listener, and orders_queue
     :return: the input strategy with a report
@@ -23,7 +23,7 @@ def exit_brak_north(**kwargs):
         strategy={
             'bot': strategy['bot'],
             'command': 'move',
-            'parameters': 110
+            'parameters': 383
         },
         listener=listener,
         orders_queue=orders_queue
@@ -36,10 +36,10 @@ def exit_brak_north(**kwargs):
         }
         return strategy
 
-    brak_door_id = 184  # TODO: ask Batou what id is actually used (this is the skill id, might need something else)
+    door_id = 184  # TODO: ask Batou what id is actually used (this is the skill id, might need something else)
     order = {
         'command': 'use_interactive',
-        'parameters': {'id': brak_door_id}
+        'parameters': {'id': door_id}
     }
     logger.info('Sending order to bot API: {}'.format(order))
     orders_queue.put((json.dumps(order),))
@@ -49,20 +49,20 @@ def exit_brak_north(**kwargs):
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'pos' in listener.game_state.keys():
-            if listener.game_state['pos'] == (-25, 30):
+            if listener.game_state['pos'] == (-2, 8):
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
 
     if waiting:
-        logger.warn('Failed exiting brak through the north gate in {}s'.format(execution_time))
+        logger.warn('Failed entering bwork in {}s'.format(execution_time))
         strategy['report'] = {
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
         return strategy
 
-    logger.info('Exited brak through the north gate in {}s'.format(execution_time))
+    logger.info('Entered bwork in {}s'.format(execution_time))
     strategy['report'] = {
         'success': True,
         'details': {'Execution time': execution_time}

@@ -122,6 +122,14 @@ def get_known_zaaps(bot_name):
     client = mongo_client()
     return client.blackfalcon.bots.find_one({'name': bot_name})['known_zaaps']
 
+def add_known_zaap(bot_name, pos: tuple):
+    if type(pos) is not tuple:
+        raise TypeError('Positions must be tuples')
+    profile = get_profile(bot_name)
+    if pos not in profile['known_zaaps']:
+        profile['known_zaaps'].append(pos)
+        update_profile(bot_name, profile)
+
 
 def get_closest_known_zaap(bot_name, pos):
     known_zaaps = get_known_zaaps(bot_name)
@@ -257,16 +265,18 @@ def can_walk_to_node(map, cell, node):
     return False
 
 
-def get_path(map_info, graph, start_pos: tuple, start_cell, end_pos: tuple, end_cell, worldmap):
+def get_path(map_info, graph, start_pos: tuple, end_pos: tuple, start_cell=None, end_cell=None, worldmap=1):
     start = time.time()
     potential_start_nodes_ids = []
     potential_end_nodes_ids = []
     for key, node in graph.items():
         if node['coord'] == '{};{}'.format(start_pos[0], start_pos[1]):
+            start_cell = node['cell'] if start_cell is None else start_cell
             cells = fetch_map(map_info, node['coord'], worldmap)['cells']
             if can_walk_to_node(cells_2_map(cells), start_cell, node):
                 potential_start_nodes_ids.append(key)
         if node['coord'] == '{};{}'.format(end_pos[0], end_pos[1]):
+            end_cell = node['cell'] if end_cell is None else end_cell
             cells = fetch_map(map_info, node['coord'], worldmap)['cells']
             if can_walk_to_node(cells_2_map(cells), end_cell, node):
                 potential_end_nodes_ids.append(key)
@@ -278,5 +288,17 @@ def get_path(map_info, graph, start_pos: tuple, start_cell, end_pos: tuple, end_
         if path and len(path) < length:
             best_path = path
             length = len(path)
-    print(best_path[:-1], length, time.time() - start)
     return best_path
+
+
+if __name__ == '__main__':
+    mapinfo = []
+    for i in range(5):
+        with open('../assets/map_info_{}.json'.format(i), 'r', encoding='utf8') as f:
+            mapinfo += json.load(f)
+    graph = {}
+    for i in range(2):
+        with open('../assets/pathfinder_graph_{}.json'.format(i), 'r', encoding='utf8') as f:
+            graph.update(json.load(f))
+
+    print(get_path(mapinfo, graph, (-21, 21), (-26, 35)))

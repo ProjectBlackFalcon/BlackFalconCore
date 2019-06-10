@@ -45,7 +45,7 @@ def use_zaap(**kwargs):
     # TODO: Check that the bot knows the destination's zaap
     # TODO: Use it to go to destination
 
-    zaap_id = 114
+    zaap_id = 114   # TODO: ask Batou what id is actually used (this is the skill id, might need something else)
     bot_strategy = {
         'command': 'use_interactive',
         'parameters': {'id': zaap_id, }
