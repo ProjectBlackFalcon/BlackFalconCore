@@ -1,5 +1,3 @@
-import json
-import os
 import queue
 from threading import Thread
 
@@ -33,7 +31,7 @@ class Commander:
             self.execute_strategy(strategy)
 
     def execute_strategy(self, strategy):
-        kwargs = {'strategy': strategy, 'listener': self.listener, 'orders_queue': self.orders_queue}
+        kwargs = {'strategy': strategy, 'listener': self.listener, 'orders_queue': self.orders_queue, 'assets': self.assets}
         report = strategy
         if hasattr(strategies, strategy['command']) and hasattr(getattr(strategies, strategy['command']), strategy['command']):
             self.logger.info('Starting executor for strategy: {}'.format(strategy))
