@@ -8,20 +8,21 @@ import strategies
 
 
 class Commander:
-    def __init__(self, bot, strategies_queue: queue.Queue, reports_queue: queue.Queue, assets):
-        self.logger = logger.get_logger(__name__, bot['name'])
-        self.bot = bot
+    def __init__(self, bot_profile, strategies_queue: queue.Queue, reports_queue: queue.Queue, assets):
+        self.bot = bot_profile
+        self.logger = logger.get_logger(__name__, self.bot['name'])
         self.strategies_queue = strategies_queue
         self.reports_queue = reports_queue
         self.assets = assets
         self.logger.info('Starting listener')
-        self.listener = Listener(bot)
-        Thread(target=self.listener.run).start()
+        self.listener = Listener(self.bot)
+        self.listener_thread = Thread(target=self.listener.run)
+        self.listener_thread.start()
         self.logger.info('Starting connector')
         self.orders_queue = queue.Queue()
-        self.connection = Thread(target=Connection, args=('localhost', bot['id'] + 1000, self.orders_queue, self.listener.output_queue, bot))
+        self.connection = Thread(target=Connection, args=('localhost', self.bot['id'] + 1000, self.orders_queue, self.listener.output_queue, self.bot))
         self.connection.start()
-        self.logger.info('New commander spawned for {}'.format(bot['name']))
+        self.logger.info('New commander spawned for {}'.format(self.bot['name']))
         self.run()
 
     def run(self):

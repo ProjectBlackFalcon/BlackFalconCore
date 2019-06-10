@@ -19,7 +19,7 @@ def use_zaap(**kwargs):
     orders_queue = kwargs['orders_queue']
     assets = kwargs['assets']
 
-    logger = log.get_logger(__name__, strategy['bot']['name'])
+    logger = log.get_logger(__name__, strategy['bot'])
     start, global_start = time.time(), time.time()
 
     # TODO: Check that the map has a zaap
@@ -45,7 +45,7 @@ def use_zaap(**kwargs):
     # TODO: Check that the bot knows the destination's zaap
     # TODO: Use it to go to destination
 
-    zaap_id = 0  # TODO: get zaap id from listener
+    zaap_id = 114
     bot_strategy = {
         'command': 'use_interactive',
         'parameters': {'id': zaap_id, }

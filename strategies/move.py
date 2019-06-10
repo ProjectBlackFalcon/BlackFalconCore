@@ -15,7 +15,7 @@ def move(**kwargs):
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
 
-    logger = log.get_logger(__name__, strategy['bot']['name'])
+    logger = log.get_logger(__name__, strategy['bot'])
 
     if 'cell' in listener.game_state.keys():
         if listener.game_state['cell'] == strategy['parameters']['cell']:

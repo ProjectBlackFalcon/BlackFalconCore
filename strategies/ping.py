@@ -8,7 +8,7 @@ def ping(**kwargs):
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
 
-    logger = log.get_logger(__name__, strategy['bot']['name'])
+    logger = log.get_logger(__name__, strategy['bot'])
     last_ping = listener.game_state['ping'] if 'ping' in listener.game_state.keys() else 0
 
     logger.info('Sending order to bot API: {}'.format('ping'))

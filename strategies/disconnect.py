@@ -15,7 +15,7 @@ def disconnect(**kwargs):
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
 
-    logger = log.get_logger(__name__, strategy['bot']['name'])
+    logger = log.get_logger(__name__, strategy['bot'])
 
     if 'connected' in listener.game_state.keys():
         if not listener.game_state['connected']:
@@ -50,7 +50,7 @@ def disconnect(**kwargs):
         }
         return strategy
 
-    logger.info('Disonnected {} in {}s'.format(strategy['bot']['name'], execution_time))
+    logger.info('Disonnected {} in {}s'.format(strategy['bot'], execution_time))
     strategy['report'] = {
         'success': True,
         'details': {'Execution time': execution_time}

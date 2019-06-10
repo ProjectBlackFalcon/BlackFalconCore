@@ -16,7 +16,7 @@ def change_map(**kwargs):
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
 
-    logger = log.get_logger(__name__, strategy['bot']['name'])
+    logger = log.get_logger(__name__, strategy['bot'])
 
     global_start, start = time.time(), time.time()
     report = strategies.move(

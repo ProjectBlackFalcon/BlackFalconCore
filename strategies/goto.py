@@ -19,7 +19,7 @@ def goto(**kwargs):
     target_cell = strategy['parameters']['cell']
     target_worldmap = strategy['parameters']['worldmap']
 
-    logger = log.get_logger(__file__, strategy['bot']['name'])
+    logger = log.get_logger(__file__, strategy['bot'])
 
     # get current pos
     # check if path exists already
@@ -123,7 +123,7 @@ class PathMaker:
             else:
                 raise RuntimeError('Worldmap change not supported')
 
-        closest_zaap = strategies.support_functions.get_closest_known_zaap(self.strategy['bot']['name'], target_coord)
+        closest_zaap = strategies.support_functions.get_closest_known_zaap(self.strategy['bot'], target_coord)
         if closest_zaap is not None and not forbid_zaaps:
             distance_zaap_target = self.distance(closest_zaap, target_coord)
             if worldmap == current_worldmap and self.distance(current_map, target_coord) > distance_zaap_target + 5:
@@ -149,7 +149,7 @@ class PathMaker:
                         raise RuntimeError('Unable to use Zaap to go to {}'.format(closest_zaap))
                 else:
                     # If unable to enter havenbag, than just walk to the closest zaap and use this one
-                    closest_zaap_2 = strategies.support_functions.get_closest_known_zaap(self.strategy['bot']['name'], current_map)
+                    closest_zaap_2 = strategies.support_functions.get_closest_known_zaap(self.strategy['bot'], current_map)
                     self.pathmaker(closest_zaap_2, forbid_zaaps=True)
                     if closest_zaap != closest_zaap_2:
                         report = strategies.use_zaap(
@@ -169,7 +169,7 @@ class PathMaker:
 
         if list(current_map) not in self.assets['brak_maps'] and list(target_coord) in self.assets['brak_maps']:
             # Bot needs to enter brak
-            disc_zaaps = strategies.support_functions.get_known_zaaps(self.strategy['bot']['name'])
+            disc_zaaps = strategies.support_functions.get_known_zaaps(self.strategy['bot'])
             if (-26, 35) in disc_zaaps:
                 success = strategies.enter_havenbag(
                     listener=self.listener,

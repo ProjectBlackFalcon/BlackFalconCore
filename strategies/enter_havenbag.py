@@ -16,7 +16,7 @@ def enter_havenbag(**kwargs):
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
 
-    logger = log.get_logger(__name__, strategy['bot']['name'])
+    logger = log.get_logger(__name__, strategy['bot'])
 
     if listener.game_state['level'] < 10:
         logger.warn('Bot level too low')

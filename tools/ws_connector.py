@@ -1,10 +1,8 @@
 import queue
-import time
 
 import websocket
 from threading import Thread
 
-from credentials import credentials
 from tools import logger
 
 
@@ -39,21 +37,26 @@ class Connection:
                 for order in queue.get():
                     self.logger.info('Sending order: ' + str(order))
                     self.connection.send(str(order).encode('utf8'))
-        Thread(target=run, args=(self.orders_queue, )).start()
+        self.thread = Thread(target=run, args=(self.orders_queue, ))
+        self.thread.start()
 
 
 if __name__ == '__main__':
     orders = queue.Queue()
     t = Thread(target=Connection, args=('localhost', 8721, orders, queue.Queue()))
     t.start()
+
+    orders.put(({
+        'bot': 'Ilancelet',
+        'command': 'delete_bot',
+        'parameters': {"name": "Ilancelet"}
+               },))
+
     order = {
-        'bot': credentials['bots']['0'],
+        'bot': 'Ilancelet',
         'command': 'ping',
         'version': 1,
         'parameters': None
     }
     orders.put((order, ))
-    print('Order sent')
-    time.sleep(10)
-    orders.put((order,))
-    print('Order sent')
+

@@ -16,7 +16,7 @@ def exit_havenbag(**kwargs):
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
 
-    logger = log.get_logger(__name__, strategy['bot']['name'])
+    logger = log.get_logger(__name__, strategy['bot'])
 
     if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
         if listener.game_state['pos'] != (0, 0) or listener.game_state['worldmap'] != -1:

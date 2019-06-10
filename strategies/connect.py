@@ -1,6 +1,7 @@
 import json
 import time
 
+import strategies
 from tools import logger as log
 
 
@@ -15,7 +16,7 @@ def connect(**kwargs):
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
 
-    logger = log.get_logger(__name__, strategy['bot']['name'])
+    logger = log.get_logger(__name__, strategy['bot'])
 
     if 'connected' in listener.game_state.keys():
         if listener.game_state['connected']:
@@ -26,12 +27,13 @@ def connect(**kwargs):
             }
             return strategy
 
+    bot_profile = strategies.support_functions.get_profile(strategy['bot'])
     order = {
         'command': strategy['command'],
         'parameters': {
-            'username': strategy['bot']['username'],
-            'password': strategy['bot']['password'],
-            'server': strategy['bot']['server'],
+            'username': bot_profile['username'],
+            'password': bot_profile['password'],
+            'server': bot_profile['server'],
         }
     }
     logger.info('Sending order to bot API: {}'.format(order))
@@ -55,7 +57,7 @@ def connect(**kwargs):
         }
         return strategy
 
-    logger.info('Connected {} in {}s'.format(strategy['bot']['name'], execution_time))
+    logger.info('Connected {} in {}s'.format(strategy['bot'], execution_time))
     strategy['report'] = {
         'success': True,
         'details': {'Execution time': execution_time}
