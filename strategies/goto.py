@@ -4,11 +4,283 @@ from heapq import *
 import time
 from random import randint
 
+from tools import logger as log
+import strategies
+
+
+def goto(**kwargs):
+    strategy = kwargs['strategy']
+    listener = kwargs['listener']
+    orders_queue = kwargs['orders_queue']
+    assets = kwargs['assets']
+
+    target_x = strategy['parameters']['x']
+    target_y = strategy['parameters']['y']
+    target_cell = strategy['parameters']['cell']
+    target_worldmap = strategy['parameters']['worldmap']
+
+    logger = log.get_logger(__file__, strategy['bot']['name'])
+
+    # get current pos
+    # check if path exists already
+    # if it does, select that
+    # otherwise make a new one
+    # actually perform the goto
+
+    log.close_logger(logger)
+    return strategy
+
+
+class PathMaker:
+    def __init__(self, strategy, listener, orders_queue, logger, assets, target_coord, target_cell=None, worldmap=1, harvest=False, forbid_zaaps=False):
+        self.strategy = strategy
+        self.listener = listener
+        self.orders_queue = orders_queue
+        self.logger = logger
+        self.assets = assets
+        self.target_coord = target_coord
+        self.target_cell = target_cell
+        self.target_worldmap = worldmap
+        self.harvest = harvest
+        self.forbid_zaaps = forbid_zaaps
+
+    def getmap(self):
+        current_map, current_cell, current_worldmap, map_id = self.listener['pos'], self.listener['cell'], self.listener['worldmap'], self.listener['map_id']
+        return current_map, current_cell, current_worldmap, map_id
+
+    def distance(self, pos1, pos2):
+        return ((pos2[0] - pos1[0]) ** 2 + (pos2[1] - pos1[1]) ** 2) ** 0.5
+
+    def pathmaker(self, target_coord, target_cell=None, worldmap=1, harvest=False, forbid_zaaps=False):
+        current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+        if current_worldmap != worldmap:
+
+            # Incarnam to Astrub
+            if current_worldmap == 2 and worldmap == 1:
+                self.pathmaker((4, -3), worldmap=2)
+                strategies.go_to_astrub(
+                    listener=self.listener,
+                    orders_queue=self.orders_queue,
+                    strategy={
+                        'bot': self.strategy['bot'],
+                    }
+                )
+                current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+            # Astrub to Incarnam
+            elif current_worldmap == 1 and worldmap == 2:
+                gate_map = (6, -19)
+                self.pathmaker(gate_map, target_cell=397)
+                strategies.go_to_incarnam(
+                    listener=self.listener,
+                    orders_queue=self.orders_queue,
+                    strategy={
+                        'bot': self.strategy['bot'],
+                    }
+                )
+                current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+            # Bot is in hunting hall
+            elif list(current_map) == [-25, -36] and current_worldmap == -1:
+                strategies.exit_hunting_hall(
+                    listener=self.listener,
+                    orders_queue=self.orders_queue,
+                    strategy={
+                        'bot': self.strategy['bot'],
+                    }
+                )
+                current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+            # Bot is in a building or underground
+            elif current_worldmap == -1:
+                closest_zaap = self.get_closest_known_zaap(target_coord)
+                if closest_zaap is not None:
+                    success = strategies.enter_havenbag(
+                        listener=self.listener,
+                        strategy={'bot': self.strategy['bot']},
+                        orders_queue=self.orders_queue
+                    )['report']['success']
+
+                    if success:
+                        report = strategies.use_zaap(
+                            listener=self.listener,
+                            orders_queue=self.orders_queue,
+                            assets=self.assets,
+                            strategy={
+                                'bot': self.strategy['bot'],
+                                'parameters': {'target_zaap': closest_zaap}
+                            }
+                        )['report']
+                        current_map, current_cell, current_worldmap, map_id = self.getmap()
+                        if not report['success']:
+                            self.logger.warn('Unable to use Zaap to go to {}. Reason: {}'.format(closest_zaap, report['details']))
+                            raise RuntimeError('Unable to use Zaap to go to {}'.format(closest_zaap))
+                else:
+                    raise RuntimeError('No known zaaps')
+
+            # TODO manage more worldmap changing
+            else:
+                raise RuntimeError('Worldmap change not supported')
+
+        closest_zaap = strategies.support_functions.get_closest_known_zaap(self.strategy['bot']['name'], target_coord)
+        if closest_zaap is not None and not forbid_zaaps:
+            distance_zaap_target = self.distance(closest_zaap, target_coord)
+            if worldmap == current_worldmap and self.distance(current_map, target_coord) > distance_zaap_target + 5:
+                report = strategies.enter_havenbag(
+                    listener=self.listener,
+                    strategy={'bot': self.strategy['bot']},
+                    orders_queue=self.orders_queue
+                )['report']
+
+                if report['success']:
+                    report = strategies.use_zaap(
+                        listener=self.listener,
+                        orders_queue=self.orders_queue,
+                        assets=self.assets,
+                        strategy={
+                            'bot': self.strategy['bot'],
+                            'parameters': {'target_zaap': closest_zaap}
+                        }
+                    )['report']
+                    current_map, current_cell, current_worldmap, map_id = self.getmap()
+                    if not report['success']:
+                        self.logger.warn('Unable to use Zaap to go to {}. Reason: {}'.format(closest_zaap, report['details']))
+                        raise RuntimeError('Unable to use Zaap to go to {}'.format(closest_zaap))
+                else:
+                    # If unable to enter havenbag, than just walk to the closest zaap and use this one
+                    closest_zaap_2 = strategies.support_functions.get_closest_known_zaap(self.strategy['bot']['name'], current_map)
+                    self.pathmaker(closest_zaap_2, forbid_zaaps=True)
+                    if closest_zaap != closest_zaap_2:
+                        report = strategies.use_zaap(
+                            listener=self.listener,
+                            orders_queue=self.orders_queue,
+                            assets=self.assets,
+                            strategy={
+                                'bot': self.strategy['bot'],
+                                'parameters': {'target_zaap': closest_zaap}
+                            }
+                        )['report']
+                        if not report['success']:
+                            self.logger.warn(
+                                'Unable to use Zaap to go to {}. Reason: {}'.format(closest_zaap, report['details']))
+                            raise RuntimeError('Unable to use Zaap to go to {}'.format(closest_zaap))
+                    current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+        if list(current_map) not in self.assets['brak_maps'] and list(target_coord) in self.assets['brak_maps']:
+            # Bot needs to enter brak
+            disc_zaaps = strategies.support_functions.get_known_zaaps(self.strategy['bot']['name'])
+            if (-26, 35) in disc_zaaps:
+                success = strategies.enter_havenbag(
+                    listener=self.listener,
+                    strategy={'bot': self.strategy['bot']},
+                    orders_queue=self.orders_queue
+                )['report']['success']
+
+                if success:
+                    report = strategies.use_zaap(
+                        listener=self.listener,
+                        orders_queue=self.orders_queue,
+                        assets=self.assets,
+                        strategy={
+                            'bot': self.strategy['bot'],
+                            'parameters': {'target_zaap': (-26, 35)}
+                        }
+                    )['report']
+                    if not report['success']:
+                        self.logger.warn('Unable to use Zaap to go to {}. Reason: {}'.format((-26, 35), report['details']))
+                        raise RuntimeError('Unable to use Zaap to go to {}'.format((-26, 35)))
+                current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+        if list(current_map) in self.assets['brak_maps'] and list(target_coord) not in self.assets['brak_maps']:
+            # Bot needs to exit brak
+            if list(target_coord) in self.assets['brak_maps']:
+                self.pathmaker((-20, 34))
+                strategies.change_map(
+                    listener=self.listener,
+                    orders_queue=self.orders_queue,
+                    assets=self.assets,
+                    strategy={
+                        'bot': self.strategy['bot'],
+                        'parameters': {'cell': 307, 'direction': 'e'}
+                    }
+                )
+            elif list(target_coord) in self.bot.resources.brak_north_maps:
+                self.pathmaker((-26, 31))
+                strategies.exit_brak_north(
+                    listener=self.listener,
+                    orders_queue=self.orders_queue,
+                    assets=self.assets,
+                    strategy={'bot': self.strategy['bot']}
+                )
+            current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+        if list(current_map) in self.bot.resources.west_dd_territory_maps and list(target_coord) in self.bot.resources.dd_territory_maps:
+            # Bot needs to enter dd territory from west
+            self.goto((-23, -1), target_cell=387)
+            self.bot.interface.enter_dd_territory()
+            current_map, current_cell, current_worldmap, map_id = self.getmap()
+        if list(current_map) in self.bot.resources.dd_territory_maps and list(target_coord) in self.bot.resources.west_dd_territory_maps:
+            # Bot needs to exit dd territory to the west
+            self.goto((-22, -1))
+            self.bot.interface.change_map(294, 'w')
+            current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+        if list(current_map) not in self.bot.resources.castle_maps and list(target_coord) in self.bot.resources.castle_maps:
+            # Bot needs to enter the castle
+            disc_zaaps = self.bot.llf.get_discovered_zaaps(self.bot.credentials['name'])
+            if [3, -5] in disc_zaaps and self.bot.interface.enter_heavenbag()[0]:
+                self.bot.interface.use_zaap((3, -5))
+                current_map, current_cell, current_worldmap, map_id = self.getmap()
+        if list(current_map) in self.bot.resources.castle_maps and list(target_coord) not in self.bot.resources.castle_maps:
+            # Bot needs to exit the castle through the northern gate
+            if target_coord[1] <= current_map[1]:
+                self.goto((4, -8))
+                self.bot.interface.change_map(140, 'w')
+                current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+        if list(current_map) not in self.bot.resources.bwork_maps and list(target_coord) in self.bot.resources.bwork_maps:
+            # Bot needs to enter bwork village
+            self.goto((-1, 8), target_cell=383)
+            self.bot.interface.enter_bwork()
+            current_map, current_cell, current_worldmap, map_id = self.getmap()
+        if list(current_map) in self.bot.resources.bwork_maps and list(target_coord) not in self.bot.resources.bwork_maps:
+            # Bot needs to exit bwork village
+            self.goto((-2, 8), target_cell=260)
+            self.bot.interface.exit_bwork()
+            current_map, current_cell, current_worldmap, map_id = self.getmap()
+
+        if current_map == target_coord and current_cell == target_cell and worldmap == current_worldmap:
+            return
+
+        if current_map == target_coord and worldmap == current_worldmap and target_cell is not None:
+            if self.bot.interface.move(target_cell):
+                return
+
+        pf = PathFinder(self.bot, current_map, target_coord, current_cell, target_cell, worldmap)
+        path_directions = pf.get_map_change_cells()
+        for i in range(len(path_directions)):
+            if self.bot.interface.change_map(path_directions[i][0], path_directions[i][1])[0]:
+                current_map, current_cell, current_worldmap, map_id = self.getmap()
+                self.bot.position = current_map, current_worldmap
+                if current_worldmap == 1:
+                    self.bot.llf.add_discovered_zaap(self.bot.credentials['name'], self.bot.position)
+                if harvest:
+                    self.harvest_map()
+            else:
+                raise ValueError('Interface returned false on move command. Position : {}, Cell : {}, Direction : {}'.format(self.bot.position, path_directions[i][0], path_directions[i][1]))
+
+        if tuple(current_map) != tuple(target_coord):
+            self.goto(target_coord, target_cell, worldmap)
+
+        if target_cell is not None:
+            self.bot.interface.move(target_cell)
+        self.bot.position = (target_coord, worldmap)
+
 
 class PathFinder:
-    def __init__(self, bot, start_map, end_map, start_cell, end_cell, worldmap, max_enlargement=15):
-        self.bot = bot
-        self.llf = bot.llf
+    def __init__(self, start_map, end_map, start_cell, end_cell, worldmap, mapinfo, logger, max_enlargement=15):
+        self.logger = logger
         self.start = start_map
         self.end = end_map
         self.worldmap = worldmap
@@ -16,7 +288,7 @@ class PathFinder:
         self.start_cell = self.pick_start_cell()
         self.end_cell = end_cell
         self.end_cell = self.pick_end_cell()
-        self.bot.llf.log(self.bot, '[Pathfinder {}] Going from map {}, cell {} to map {}, cell {}, worldmap : {}'.format(self.bot.id, start_map, start_cell, end_map, self.end_cell, worldmap))
+        self.logger.info('Going from map {}, cell {} to map {}, cell {}, worldmap : {}'.format(start_map, start_cell, end_map, self.end_cell, worldmap))
         self.bbox = (
             min(start_map[0], end_map[0]),
             min(start_map[1], end_map[1]),
@@ -24,7 +296,7 @@ class PathFinder:
             max(start_map[1], end_map[1])
         )
         self.shape = (abs(self.bbox[1]-self.bbox[3])+1, abs(self.bbox[0]-self.bbox[2])+1)
-        self.mapinfo = self.llf.load_map_info()
+        self.mapinfo = mapinfo
         self.maps_coords = []
         self.glued_maps = []
         self.adapted_maps = []
@@ -35,9 +307,29 @@ class PathFinder:
         self.max_enlargement = max_enlargement
         self.enlargement_n = 0
 
+    def load_map_info(self):
+        corners = [(0, 0), (1, 0), (0, 1), (0, 2), (13, 0), (12, 1), (13, 1), (13, 2), (13, 37), (13, 38), (12, 39),
+                   (13, 39), (0, 37), (0, 38), (1, 38), (0, 39)]
+        for map in self.mapinfo:
+            for pos in corners:
+                map['cells'][pos[1]][pos[0]] = 2
+        return self.mapinfo
+
+    def coord_fetch_map(self, coord, worldmap):
+        maps = []
+        for map in self.mapinfo:
+            if map['coord'] == coord and map['worldMap'] == worldmap:
+                maps.append(map)
+        if len(maps) == 1 and maps[0] is not None:
+            return maps[0]['cells']
+        elif len(maps) > 1:
+            for map in maps:
+                if map['hasPriorityOnWorldMap']:
+                    return map['cells']
+
     def enlarge(self):
         self.enlargement_n += 1
-        self.bot.llf.log(self.bot, '[Pathfinder {}] Enlarging'.format(self.bot.id))
+        self.logger.info('Enlarging')
         self.bbox = (
             self.bbox[0]-1,
             self.bbox[1]-1,
@@ -45,7 +337,7 @@ class PathFinder:
             self.bbox[3]+1
         )
         self.shape = (abs(self.bbox[1]-self.bbox[3])+1, abs(self.bbox[0]-self.bbox[2])+1)
-        self.mapinfo = self.llf.load_map_info()
+        self.mapinfo = self.load_map_info()
         self.maps_coords = []
         self.glued_maps = []
         self.adapted_maps = []
@@ -86,7 +378,9 @@ class PathFinder:
                 self.cell2coord(self.end_cell)[0]+14*(self.end[0]-self.bbox[0]),
                 self.cell2coord(self.end_cell)[1]+40*(self.end[1]-self.bbox[1])
             )
-            while self.llf.distance_coords(start_pos, goal_pos) <= 2:
+
+            # Euclidean distance
+            while ((goal_pos[0] - start_pos[0]) ** 2 + (goal_pos[1] - start_pos[1]) ** 2) ** 0.5 <= 2:
                 self.end_cell = None
                 self.end_cell = self.pick_end_cell()
                 goal_pos = (
@@ -131,7 +425,7 @@ class PathFinder:
 
     def astar(self, start_pos, goal_pos):
         start = time.time()
-        self.bot.llf.log(self.bot, '[Pathfinder {}] Generating path...'.format(self.bot.id))
+        self.logger.info('Generating path...')
 
         start_pos = start_pos[1], start_pos[0]
         goal_pos = goal_pos[1], goal_pos[0]
@@ -180,9 +474,9 @@ class PathFinder:
                     fscore[neighbor] = tentative_g_score + self.heuristic(neighbor, goal_pos)
                     heappush(oheap, (fscore[neighbor], neighbor))
         if self.path_cells:
-            self.bot.llf.log(self.bot, '[Pathfinder {}] Done in {}s'.format(self.bot.id, round(time.time()-start, 1)))
+            self.logger.info('Done in {}s'.format(round(time.time()-start, 1)))
         else:
-            self.bot.llf.log(self.bot, '[Pathfinder {}] Unable to get path'.format(self.bot.id))
+            self.logger.info('Unable to get path')
         return False
 
     def add_path_to_adapted_maps(self):
@@ -199,7 +493,7 @@ class PathFinder:
 
         maps_list = []
         for coord in self.maps_coords:
-            map_infos = self.llf.coord_fetch_map(coord, self.worldmap)
+            map_infos = self.coord_fetch_map(coord, self.worldmap)
             if map_infos is not None:
                 maps_list.append(map_infos)
             else:
@@ -221,6 +515,7 @@ class PathFinder:
             self.enlarge()
             self.get_path_try()
         if not self.path_cells:
+            self.logger.warn('Could not generate path from {} cell {} to {} cell {}'.format(self.start, self.start_cell, self.end, self.end_cell))
             raise RuntimeError('Could not generate path from {} cell {} to {} cell {}'.format(self.start, self.start_cell, self.end, self.end_cell))
         # self.path_cells.append(self.cell2coord_diag(self.end_cell))
 
@@ -283,7 +578,7 @@ class PathFinder:
 
     def pick_end_cell(self):
         if self.end_cell is None:
-            end_map_cells = self.llf.coord_fetch_map('{};{}'.format(self.end[0], self.end[1]), self.worldmap)
+            end_map_cells = self.coord_fetch_map('{};{}'.format(self.end[0], self.end[1]), self.worldmap)
             map_change_cells = list(set([i for i in range(28)] + [i for i in range(560) if i % 14 == 0] + [i for i in range(560) if i % 14 == 13] + [i for i in range(532, 560)]))
             found_walkable = False
             timeout = 10
@@ -294,12 +589,13 @@ class PathFinder:
                     found_walkable = True
                 self.end_cell = self.coord2cell((y, x))
             if not found_walkable:
-                raise Exception('Map is innacessible')
+                self.logger.warn('Map is inaccessible')
+                raise Exception('Map is inaccessible')
         return self.end_cell
 
     def pick_start_cell(self):
         if self.start_cell is None:
-            start_map_cells = self.llf.coord_fetch_map('{};{}'.format(self.start[0], self.start[1]), self.worldmap)
+            start_map_cells = self.coord_fetch_map('{};{}'.format(self.start[0], self.start[1]), self.worldmap)
             map_change_cells = list(set([i for i in range(28)] + [i for i in range(560) if i % 14 == 0] + [i for i in range(560) if i % 14 == 13] + [i for i in range(532, 560)]))
             found_walkable = False
             while not found_walkable:
