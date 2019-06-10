@@ -27,7 +27,7 @@ def move(**kwargs):
             return strategy
 
     order = {
-        'command': strategy['command'],
+        'command': 'move',
         'parameters': strategy['parameters']
     }
     logger.info('Sending order to bot API: {}'.format(order))

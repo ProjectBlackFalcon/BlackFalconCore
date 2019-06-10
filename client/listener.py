@@ -19,6 +19,7 @@ class Listener:
             'username': bot['username'],
             'password': bot['password'],
             'server': bot['server'],
+            'level': 0
         }
         self.game_state = json.loads(json.dumps(self._game_state))
 
