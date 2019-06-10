@@ -8,6 +8,7 @@ from threading import Thread
 
 from websocket_server import WebsocketServer
 
+import strategies
 from client.commander import Commander
 from tools import logger
 
@@ -66,24 +67,74 @@ class SwarmNode:
         if 'id' not in message.keys():
             message['id'] = str(uuid.uuid4())
         self.cartography['messages'][message['id']] = client
-        if message['bot']['id'] not in self.cartography.keys():
-            self.logger.info('Bot is not running. Starting commander for {}'.format(message['bot']['name']))
-            self.spawn_commander(json.loads(json.dumps(message['bot'])))
-        self.logger.info('Adding strategy to {}: {}'.format(message['bot']['name'], message))
-        self.cartography[message['bot']['id']]['strategies_queue'].put(message)
+        intercept_command = False
+
+        if message['command'] == 'new_bot':
+            intercept_command = True
+            self.logger.info('Creating new bot : ' + str(message['parameters']['bot']))
+            try:
+                strategies.support_functions.create_profile(
+                    id=message['parameters']['bot']['id'],
+                    bot_name=message['parameters']['bot']['name'],
+                    password=message['parameters']['bot']['password'],
+                    username=message['parameters']['bot']['username'],
+                    server=message['parameters']['bot']['server']
+                )
+                self.logger.info('Created : ' + str(message['parameters']['bot']['name']))
+                message['success'] = True
+                message['details'] = {}
+                self.api.send_message(client, json.dumps(message))
+            except Exception as e:
+                if e.args[0] == 'Bot already exists. Delete it using the \'delete_bot\' command first.':
+                    self.logger.warn('Failed creating : ' + str(message['parameters']['bot']['name']))
+                    message['success'] = False
+                    message['details'] = {'reason': e.args[0]}
+                    self.api.send_message(client, json.dumps(message))
+                else:
+                    raise
+                return
+
+        if message['command'] == 'delete_bot':
+            intercept_command = True
+            strategies.support_functions.delete_profile(message['parameters']['name'])
+            message['success'] = True
+            message['details'] = {}
+            if message['parameters']['name'] in self.cartography.keys():
+                # TODO: This is shit, implement a kill commander order or something.
+                del self.cartography[message['parameters']['name']]
+            self.api.send_message(client, json.dumps(message))
+            return
+
+        if message['bot'] not in self.cartography.keys():
+            self.logger.info('Bot is not running. Starting commander for {}'.format(message['bot']))
+            try:
+                self.spawn_commander(json.loads(json.dumps(message['bot'])))
+            except Exception as e:
+                if e.args[0] == 'Bot does not exist. Create a profile using the \'new_bot\' command first.':
+                    message['success'] = False
+                    message['details'] = {'reason': e.args[0]}
+                    self.api.send_message(client, json.dumps(message))
+                else:
+                    raise
+                return
+
+        if not intercept_command:
+            self.logger.info('Adding strategy to {}: {}'.format(message['bot'], message))
+            self.cartography[message['bot']]['strategies_queue'].put(message)
 
     def reports_listener(self):
         while 1:
             report = self.report_queue.get()
-            self.logger.info('New report from {}: {}'.format(report['bot']['name'], report))
+            self.logger.info('New report from {}: {}'.format(report['bot'], report))
             client = self.cartography['messages'].pop(report['id'])
-            self.api.send_message(client, str(report))
+            self.api.send_message(client, json.dumps(report))
 
-    def spawn_commander(self, bot: dict):
-        self.cartography[bot['id']] = bot
-        self.cartography[bot['id']].update({'strategies_queue': queue.Queue()})
-        self.cartography[bot['id']].update({'thread': Thread(target=Commander, args=(bot, self.cartography[bot['id']]['strategies_queue'], self.report_queue, self.assets))})
-        self.cartography[bot['id']]['thread'].start()
+    def spawn_commander(self, bot_name):
+        bot_profile = strategies.support_functions.get_profile(bot_name)
+        self.cartography[bot_name] = {}
+        self.cartography[bot_name].update({'strategies_queue': queue.Queue()})
+        self.cartography[bot_name].update({'thread': Thread(target=Commander, args=(bot_profile, self.cartography[bot_name]['strategies_queue'], self.report_queue, self.assets))})
+        self.cartography[bot_name]['thread'].start()
 
 
 if __name__ == '__main__':
