@@ -31,19 +31,33 @@ class SwarmNode:
 
     def load_assets(self):
         start = time.time()
-        self.logger.info('Loading static assets...')
         assets_paths = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets'))
+        files_packs = {}
+        self.logger.info('Mapping static assets')
         for file in os.listdir(assets_paths):
             if file.endswith('.json'):
-                self.logger.info('Loading asset: {}'.format(file))
-                with open(assets_paths + '/' + file, 'r', encoding='utf8') as f:
-                    if 'map_info' in file:
-                        if '_0' in file:
-                            self.assets['map_info'] = json.load(f)
-                        else:
-                            self.assets['map_info'].append(json.load(f))
+                if file.replace('.json', '').split('_')[-1].isdigit():
+                    if '_'.join(file.replace('.json', '').split('_')[:-1]) not in files_packs.keys():
+                        files_packs['_'.join(file.replace('.json', '').split('_')[:-1])] = [file]
                     else:
-                        self.assets[file.replace('.json', '')] = json.load(f)
+                        files_packs['_'.join(file.replace('.json', '').split('_')[:-1])].append(file)
+                else:
+                    files_packs[file.replace('.json', '')] = [file]
+
+        self.logger.info('Loading static assets...')
+        for asset_name, file_pack in files_packs.items():
+            self.logger.info('Loading asset: {}'.format(asset_name))
+            for file in file_pack:
+                with open(assets_paths + '/' + file, 'r', encoding='utf8') as f:
+                    data = json.load(f)
+                if asset_name not in self.assets.keys():
+                    self.assets[asset_name] = data
+                else:
+                    if type(data) is list:
+                        self.assets[asset_name] += data
+                    elif type(data) is dict:
+                        self.assets[asset_name].update(data)
+
         self.logger.info('Done loading assets in {}s'.format(round(time.time() - start, 2)))
 
     def api_on_message(self, client, server, message):
@@ -73,6 +87,6 @@ class SwarmNode:
 
 
 if __name__ == '__main__':
-    swarm_node = SwarmNode('localhost')
+    swarm_node = SwarmNode(host='localhost')
     # swarm_node.spawn_commander(bot={'id': 0, 'name': 'Ilancelet', 'username': '?', 'password': '?', 'server': 'Julith'})
     time.sleep(5)
