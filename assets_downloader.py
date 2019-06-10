@@ -44,6 +44,15 @@ def download_file(client, filename):
         json.dump(data['payload'], f, ensure_ascii=False)
 
 
+def remove_deprecated_assets(client):
+    local_files = set([path.replace('.json', '') for path in os.listdir(os.path.join(os.path.dirname(__file__), 'assets')) if path.endswith('.json')])
+    mongo_files = set([document['filename'] for document in client.blackfalcon.checksums.find({})])
+    files_to_remove = local_files - mongo_files
+    for file in files_to_remove:
+        print('Removing deprecated local file', file)
+        os.remove(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'assets', file + '.json'))
+
+
 def update_assets():
     client = pymongo.MongoClient(
         host=credentials['mongo']['host'],
@@ -52,12 +61,15 @@ def update_assets():
         password=credentials['mongo']['password']
     )
 
+    remove_deprecated_assets(client)
+
     mongo_checksums = get_mongo_checksums(client)
     local_checksums = create_assets_checksums()
 
     files_to_update = get_files_to_update(mongo_checksums, local_checksums)
 
     [download_file(client, filename) for filename in files_to_update]
+    print('All files are up to date')
 
 
 if __name__ == '__main__':
