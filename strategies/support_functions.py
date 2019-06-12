@@ -166,10 +166,11 @@ def get_path_nodes(graph, start_node_id, end_node_id):
             coords = ''
             for node_id in data:
                 if graph[node_id]['coord'] != coords:
-                    path.append({'coord': graph[node_id]['coord'], 'cell': graph[node_id]['cell'],
-                                 'direction': graph[node_id]['direction']})
+                    path.append({'coord': graph[node_id]['coord'], 'cell': graph[node_id]['cell'], 'direction': graph[node_id]['direction']})
                     coords = graph[node_id]['coord']
-            return list(reversed(path))
+
+            path.append({'coord': graph[start_node_id]['coord'], 'cell': graph[start_node_id]['cell'], 'direction': graph[start_node_id]['direction']})
+            return list(reversed(path[1:]))
 
         close_set.add(current)
         neighbours = graph[current]['neighbours']
@@ -244,7 +245,7 @@ def can_walk_to_node(map, cell, node):
             tentative_g_score = gscore[current] + (neighbor[0] - current[0]) ** 2 + (neighbor[1] - current[1]) ** 2
             if 0 <= neighbor[0] < map.shape[0]:
                 if 0 <= neighbor[1] < map.shape[1]:
-                    if map[neighbor[0]][neighbor[1]] in  [1, 2]:
+                    if map[neighbor[0]][neighbor[1]] in [-1, 1, 2]:
                         continue
                 else:
                     # array bound y walls
@@ -269,25 +270,29 @@ def get_path(map_info, graph, start_pos: tuple, end_pos: tuple, start_cell=None,
     start = time.time()
     potential_start_nodes_ids = []
     potential_end_nodes_ids = []
+    start_cell_set = False if start_cell is None else True
+    end_cell_set = False if end_cell is None else True
     for key, node in graph.items():
         if node['coord'] == '{};{}'.format(start_pos[0], start_pos[1]):
-            start_cell = node['cell'] if start_cell is None else start_cell
+            tmp_start_cell = node['cell'] if start_cell_set is False else start_cell
             cells = fetch_map(map_info, node['coord'], worldmap)['cells']
-            if can_walk_to_node(cells_2_map(cells), start_cell, node):
+            if can_walk_to_node(cells_2_map(cells), tmp_start_cell, node):
                 potential_start_nodes_ids.append(key)
         if node['coord'] == '{};{}'.format(end_pos[0], end_pos[1]):
-            end_cell = node['cell'] if end_cell is None else end_cell
+            tmp_end_cell = node['cell'] if end_cell_set is False else end_cell
             cells = fetch_map(map_info, node['coord'], worldmap)['cells']
-            if can_walk_to_node(cells_2_map(cells), end_cell, node):
+            if can_walk_to_node(cells_2_map(cells), tmp_end_cell, node):
                 potential_end_nodes_ids.append(key)
 
     couples = list(itertools.product(potential_start_nodes_ids, potential_end_nodes_ids))
+    print(len(couples))
     best_path, length = None, sys.maxsize
     for couple in couples:
         path = get_path_nodes(graph, couple[0], couple[1])
         if path and len(path) < length:
             best_path = path
             length = len(path)
+    print(time.time() - start)
     return best_path
 
 
@@ -301,4 +306,5 @@ if __name__ == '__main__':
         with open('../assets/pathfinder_graph_{}.json'.format(i), 'r', encoding='utf8') as f:
             graph.update(json.load(f))
 
-    print(get_path(mapinfo, graph, (-21, 21), (-26, 35)))
+    print('Starting')
+    print(get_path(mapinfo, graph, (-5, -2), (-5, -1)))
