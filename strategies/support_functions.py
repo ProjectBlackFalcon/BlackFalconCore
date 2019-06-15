@@ -122,6 +122,7 @@ def get_known_zaaps(bot_name):
     client = mongo_client()
     return client.blackfalcon.bots.find_one({'name': bot_name})['known_zaaps']
 
+
 def add_known_zaap(bot_name, pos: tuple):
     if type(pos) is not tuple:
         raise TypeError('Positions must be tuples')
@@ -139,10 +140,12 @@ def get_closest_known_zaap(bot_name, pos):
             closest = zaap_pos, dist(pos, zaap_pos)
     return tuple(closest[0]) if closest is not None else None
 
+
 def heuristic(node1, node2):
     coords_1 = [int(coord) for coord in node1['coord'].split(';')]
     coords_2 = [int(coord) for coord in node2['coord'].split(';')]
     return dist(coords_1, coords_2)
+
 
 def get_path_nodes(graph, start_node_id, end_node_id):
     close_set = set()
@@ -200,6 +203,7 @@ def fetch_map(map_info, coord, worldmap):
             if map['hasPriorityOnWorldMap']:
                 return map
 
+
 def cells_2_map(cells):
     maps = np.array(cells)
     shape = maps.shape
@@ -211,8 +215,10 @@ def cells_2_map(cells):
         new_base[coord[1]][coord[0]] = flattened[i]
     return new_base[:]
 
+
 def cell_2_coord(cell):
     return (14 - 1 - cell % 14 + int((cell // 14) / 2)), cell % 14 + int((cell // 14) / 2 + 0.5)
+
 
 def can_walk_to_node(map, cell, node):
     start_pos = cell_2_coord(cell)

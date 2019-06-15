@@ -25,6 +25,7 @@ def connect(**kwargs):
                 'success': True,
                 'details': {'Execution time': 0}
             }
+            log.close_logger(logger)
             return strategy
 
     bot_profile = strategies.support_functions.get_profile(strategy['bot'])
@@ -55,6 +56,7 @@ def connect(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Connected {} in {}s'.format(strategy['bot'], execution_time))

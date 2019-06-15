@@ -34,6 +34,7 @@ def enter_dd_territory(**kwargs):
             'success': False,
             'details': {'Execution time': time.time() - start, 'reason': 'Move failed'}
         }
+        log.close_logger(logger)
         return strategy
 
     stairs_id = 184  # TODO: ask Batou what id is actually used (this is the skill id, might need something else)
@@ -60,6 +61,7 @@ def enter_dd_territory(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Entered DD territory using the stairs in {}s'.format(execution_time))

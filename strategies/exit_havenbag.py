@@ -25,6 +25,7 @@ def exit_havenbag(**kwargs):
                 'success': True,
                 'details': {'Execution time': 0}
             }
+            log.close_logger(logger)
             return strategy
 
     order = {
@@ -49,6 +50,7 @@ def exit_havenbag(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Exited havenbag in {}s'.format(execution_time))

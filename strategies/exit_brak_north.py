@@ -34,6 +34,7 @@ def exit_brak_north(**kwargs):
             'success': False,
             'details': {'Execution time': time.time() - start, 'reason': 'Move failed'}
         }
+        log.close_logger(logger)
         return strategy
 
     brak_door_id = 184  # TODO: ask Batou what id is actually used (this is the skill id, might need something else)
@@ -60,6 +61,7 @@ def exit_brak_north(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Exited brak through the north gate in {}s'.format(execution_time))

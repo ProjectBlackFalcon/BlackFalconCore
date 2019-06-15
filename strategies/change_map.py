@@ -37,6 +37,7 @@ def change_map(**kwargs):
             'success': False,
             'details': {'Execution time': time.time() - start, 'reason': 'Move failed'}
         }
+        log.close_logger(logger)
         return strategy
 
     current_map = list(listener.game_state['pos'])
@@ -64,6 +65,7 @@ def change_map(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Changed map from {} to {} through cell {} in {}s'.format(current_map, target_map, cell, execution_time))

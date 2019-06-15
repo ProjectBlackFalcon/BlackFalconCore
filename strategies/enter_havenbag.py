@@ -24,6 +24,7 @@ def enter_havenbag(**kwargs):
             'success': False,
             'details': {'Execution time': 0, 'Reason': 'Bot level too low'}
         }
+        log.close_logger(logger)
         return strategy
 
     if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
@@ -33,6 +34,7 @@ def enter_havenbag(**kwargs):
                 'success': True,
                 'details': {'Execution time': 0}
             }
+            log.close_logger(logger)
             return strategy
 
     order = {
@@ -57,6 +59,7 @@ def enter_havenbag(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Entered havenbag in {}s'.format(execution_time))

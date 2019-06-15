@@ -24,6 +24,7 @@ def move(**kwargs):
                 'success': True,
                 'details': {'Execution time': 0}
             }
+            log.close_logger(logger)
             return strategy
 
     order = {
@@ -49,6 +50,7 @@ def move(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Completed move to cell {} in {}s'.format(strategy['parameters']['cell'], execution_time))

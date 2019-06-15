@@ -24,6 +24,7 @@ def disconnect(**kwargs):
                 'success': True,
                 'details': {'Execution time': 0}
             }
+            log.close_logger(logger)
             return strategy
 
     order = {
@@ -48,6 +49,7 @@ def disconnect(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Disonnected {} in {}s'.format(strategy['bot'], execution_time))
