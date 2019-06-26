@@ -1,6 +1,7 @@
 import json
 import time
 
+import strategies
 from tools import logger as log
 
 
@@ -14,6 +15,7 @@ def move(**kwargs):
     strategy = kwargs['strategy']
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
+    assets = kwargs['assets']
 
     logger = log.get_logger(__name__, strategy['bot'])
 
@@ -27,9 +29,14 @@ def move(**kwargs):
             log.close_logger(logger)
             return strategy
 
+    current_pos = '{};{}'.format(listener.game_state['pos'][0], listener.game_state['pos'][1])
+    map_data = strategies.support_functions.fetch_map(assets['map_info'], current_pos, listener.game_state['worldmap'])
     order = {
         'command': 'move',
-        'parameters': strategy['parameters']
+        'parameters': {
+            "isUsingNewMovementSystem": map_data['isUsingNewMovementSystem'],
+            "cells": map_data['rawCells']
+        }
     }
     logger.info('Sending order to bot API: {}'.format(order))
     orders_queue.put((json.dumps(order),))
