@@ -15,6 +15,7 @@ def connect(**kwargs):
     strategy = kwargs['strategy']
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
+    assets = kwargs['assets']
 
     logger = log.get_logger(__name__, strategy['bot'])
 
@@ -32,9 +33,10 @@ def connect(**kwargs):
     order = {
         'command': strategy['command'],
         'parameters': {
+            'name': bot_profile['name'],
             'username': bot_profile['username'],
             'password': bot_profile['password'],
-            'server': bot_profile['server'],
+            'serverId': assets['server_2_id'][bot_profile['server']],
         }
     }
     logger.info('Sending order to bot API: {}'.format(order))
