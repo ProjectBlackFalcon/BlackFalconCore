@@ -46,7 +46,10 @@ class PathMaker:
         self.forbid_zaaps = forbid_zaaps
 
     def getmap(self):
-        current_map, current_cell, current_worldmap, map_id = self.listener['pos'], self.listener['cell'], self.listener['worldmap'], self.listener['map_id']
+        current_map = self.listener.game_state['pos']
+        current_cell = self.listener.game_state['cell']
+        current_worldmap = self.listener.game_state['worldmap']
+        map_id = self.listener.game_state['map_id']
         return current_map, current_cell, current_worldmap, map_id
 
     def distance(self, pos1, pos2):
