@@ -40,11 +40,13 @@ def change_map(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    current_map = list(listener.game_state['pos'])
+    current_map = listener.game_state['pos']
     target_map = [sum(term) for term in zip(current_map, [(0, -1), (0, 1), (-1, 0), (1, 0)][('n', 's', 'w', 'e').index(direction)])]
     order = {
         'command': strategy['command'],
-        'parameters': strategy['parameters']['direction']
+        'parameters': {
+            'direction': strategy['parameters']['direction']
+        }
     }
     logger.info('Sending order to bot API: {}'.format(order))
     orders_queue.put((json.dumps(order),))
