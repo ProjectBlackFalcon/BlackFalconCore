@@ -1,4 +1,4 @@
-# Documentation for the game_state maintained by the listener
+# Specification for the game_state maintained by the listener
 
 ````json
 {
@@ -11,6 +11,10 @@
     "pos": [0, 0],
     "cell": 250,
     "worldmap": 1,
-    "map_id" : 21654232
+    "map_id" : 21654232,
+    "kamas": 1000000,
+    "npc_dialog_open": false,
+    "zaap_dialog_open": false,
+    "map_data": {}
 }
 ````
