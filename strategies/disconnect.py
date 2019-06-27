@@ -28,7 +28,10 @@ def disconnect(**kwargs):
             return strategy
 
     order = {
-        'command': strategy['command']
+        'command': strategy['command'],
+        'parameters': {
+            'name': strategy['bot']
+        }
     }
     logger.info('Sending order to bot API: {}'.format(order))
     orders_queue.put((json.dumps(order),))
