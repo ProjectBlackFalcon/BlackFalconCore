@@ -7,7 +7,7 @@ from tools import logger as log
 def enter_havenbag(**kwargs):
     """
     A strategy to enter the haven bag.
-    Checks if the player is level > 10 and it it's already inside.
+    Checks if the player is level > 10 and if it's already inside.
 
     :param kwargs: strategy, listener, and orders_queue
     :return: the input strategy with a report
@@ -28,7 +28,7 @@ def enter_havenbag(**kwargs):
         return strategy
 
     if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
-        if listener.game_state['pos'] == (0, 0) and listener.game_state['worldmap'] == -1:
+        if listener.game_state['pos'] == [0, 0] and listener.game_state['worldmap'] == -1:
             logger.info('Entered havenbag in {}s'.format(0))
             strategy['report'] = {
                 'success': True,

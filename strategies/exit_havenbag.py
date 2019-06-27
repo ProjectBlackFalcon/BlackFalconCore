@@ -39,7 +39,7 @@ def exit_havenbag(**kwargs):
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
-            if listener.game_state['pos'] != (0, 0) or listener.game_state['worldmap'] != -1:
+            if listener.game_state['pos'] != [0, 0] or listener.game_state['worldmap'] != -1:
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start

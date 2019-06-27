@@ -191,6 +191,7 @@ def get_path_nodes(graph, start_node_id, end_node_id):
 
     return False
 
+
 def fetch_map(map_info, coord, worldmap):
     maps = []
     for map in map_info:
