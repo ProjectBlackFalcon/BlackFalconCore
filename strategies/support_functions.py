@@ -205,6 +205,13 @@ def fetch_map(map_info, coord, worldmap):
                 return map
 
 
+def map_id_2_coord(map_info, map_id):
+    for map in map_info:
+        if map['id'] == map_id:
+            return [int(coord) for coord in map['coord'].split(';')]
+    raise Exception('Map id {} not in map info'.format(map_id))
+
+
 def cells_2_map(cells):
     maps = np.array(cells)
     shape = maps.shape
