@@ -1,6 +1,10 @@
 import queue
 from threading import Thread
 
+from subprocess import Popen
+
+import time
+
 from tools.ws_connector import Connection
 from client.listener import Listener
 from tools import logger
@@ -14,14 +18,17 @@ class Commander:
         self.strategies_queue = strategies_queue
         self.reports_queue = reports_queue
         self.assets = assets
+        self.logger.info('Starting LL API')
+        args = ['java', '-jar', 'black-falcon-api-1.0-jar-with-dependencies.jar', '-p', str(self.bot['id'] + 10000)]
+        Popen(' '.join(args), shell=True)
+        time.sleep(5)
         self.logger.info('Starting listener')
         self.listener = Listener(self.bot)
         self.listener_thread = Thread(target=self.listener.run)
         self.listener_thread.start()
         self.logger.info('Starting connector')
         self.orders_queue = queue.Queue()
-        # self.connection = Thread(target=Connection, args=('localhost', self.bot['id'] + 1000, self.orders_queue, self.listener.output_queue, self.bot))
-        self.connection = Thread(target=Connection, args=('176.189.10.164', 8887, self.orders_queue, self.listener.output_queue, self.bot))
+        self.connection = Thread(target=Connection, args=('localhost', self.bot['id'] + 10000, self.orders_queue, self.listener.output_queue, self.bot))
         self.connection.start()
         self.logger.info('New commander spawned for {}'.format(self.bot['name']))
         self.run()
