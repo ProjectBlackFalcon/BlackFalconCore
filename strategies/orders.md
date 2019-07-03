@@ -33,7 +33,8 @@ For the strategies, see the strategies.md in the swarm_manager folder.
   "command": "move",
   "parameters": {
       "isUsingNewMovementSystem": "Boolean (isUsingNewMovementSystem from map_info)",
-      "cells": ["List of cells (rawCells from map_info)"]
+      "cells": ["List of cells (rawCells from map_info)"],
+      "target_cell": 548
   }
 }
 ```
