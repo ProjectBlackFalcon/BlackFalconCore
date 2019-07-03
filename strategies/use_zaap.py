@@ -45,19 +45,25 @@ def use_zaap(**kwargs):
     # TODO: Check that the bot knows the destination's zaap
     # TODO: Use it to go to destination
 
-    zaap_id = 114   # TODO: ask Batou what id is actually used (this is the skill id, might need something else)
-    bot_strategy = {
+    zaap_skill_id = 114
+    element_id = 00000  # TODO Get from gamestate
+    skill_uid = 00000  # TODO Get from gamestate
+    order = {
         'command': 'use_interactive',
-        'parameters': {'id': zaap_id, }
+        'parameters': {
+            'element_id': element_id,
+            'skill_uid': skill_uid
+        }
     }
-    logger.info('Sending order to bot API: {}'.format(json.dumps(bot_strategy)))
-    orders_queue.put((json.dumps(bot_strategy),))
+    logger.info('Sending order to bot API: {}'.format(order))
+    orders_queue.put((json.dumps(order),))
 
     start = time.time()
     timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
     waiting = True
     while waiting and time.time() - start < timeout:
-        # TODO validation condition for zaap menu
+        if listener.game_state['zaap_dialog_open']:
+            waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
 
@@ -72,11 +78,14 @@ def use_zaap(**kwargs):
     logger.info('Opened zaap menu in {}s'.format(execution_time))
 
     # TODO: Check if the bot has enough money for the travel
+    # TODO: Check if the target zaap is in the list of zaaps it can get to
     # TODO: Select a zaap from the list of possible destinations
     selected_zaap = None
     bot_strategy = {
         'command': 'travel_by_zaap',
-        'parameters': {'selected_zaap': selected_zaap}
+        'parameters': {
+            'target_map_id': selected_zaap
+        }
     }
     logger.info('Sending order to bot API: {}'.format(json.dumps(bot_strategy)))
     orders_queue.put((json.dumps(bot_strategy),))

@@ -37,10 +37,15 @@ def enter_dd_territory(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    stairs_id = 184  # TODO: ask Batou what id is actually used (this is the skill id, might need something else)
+    stairs_skill_id = 184  # TODO: ask Batou what id is actually used (this is the skill id, might need something else)
+    element_id = 00000  # TODO Get from gamestate
+    skill_uid = 00000  # TODO Get from gamestate
     order = {
         'command': 'use_interactive',
-        'parameters': {'id': stairs_id}
+        'parameters': {
+            'element_id': element_id,
+            'skill_uid': skill_uid
+        }
     }
     logger.info('Sending order to bot API: {}'.format(order))
     orders_queue.put((json.dumps(order),))
@@ -50,7 +55,7 @@ def enter_dd_territory(**kwargs):
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'pos' in listener.game_state.keys():
-            if listener.game_state['pos'] == (-22, -1):
+            if listener.game_state['pos'] == [-22, -1]:
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
