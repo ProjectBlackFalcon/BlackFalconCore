@@ -43,7 +43,7 @@ def connect(**kwargs):
     orders_queue.put((json.dumps(order),))
 
     start = time.time()
-    timeout = 20 if 'timeout' not in strategy.keys() else strategy['timeout']
+    timeout = 40 if 'timeout' not in strategy.keys() else strategy['timeout']
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'connected' in listener.game_state.keys():

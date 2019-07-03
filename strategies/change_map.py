@@ -15,6 +15,7 @@ def change_map(**kwargs):
     strategy = kwargs['strategy']
     listener = kwargs['listener']
     orders_queue = kwargs['orders_queue']
+    assets = kwargs['assets']
 
     logger = log.get_logger(__name__, strategy['bot'])
 
@@ -42,10 +43,12 @@ def change_map(**kwargs):
 
     current_map = listener.game_state['pos']
     target_map = [sum(term) for term in zip(current_map, [(0, -1), (0, 1), (-1, 0), (1, 0)][('n', 's', 'w', 'e').index(direction)])]
+    target_map_id = strategies.support_functions.fetch_map(assets['map_info'], '{};{}'.format(target_map[0], target_map[1]), listener.game_state['worldmap'])
     order = {
         'command': strategy['command'],
         'parameters': {
-            'direction': strategy['parameters']['direction']
+            'direction': strategy['parameters']['direction'],
+            'target_map_id': target_map_id
         }
     }
     logger.info('Sending order to bot API: {}'.format(order))
