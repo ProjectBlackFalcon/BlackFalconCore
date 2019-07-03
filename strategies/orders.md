@@ -51,7 +51,8 @@ Each cell is a list of bools/ints in the following order:
 {
   "command": "change_map",
   "parameters": {
-      "direction": "e, n, w, or s"
+      "direction": "e, n, w, or s",
+      "target_map_id": 154654563
   }
 }
 ```

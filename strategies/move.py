@@ -35,7 +35,8 @@ def move(**kwargs):
         'command': 'move',
         'parameters': {
             "isUsingNewMovementSystem": map_data['isUsingNewMovementSystem'],
-            "cells": map_data['rawCells']
+            "cells": map_data['rawCells'],
+            "target_cell": strategy['parameters']['cell']
         }
     }
     logger.info('Sending order to bot API: {}'.format(order))
