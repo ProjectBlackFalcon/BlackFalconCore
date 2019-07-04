@@ -2,15 +2,17 @@ import time
 from queue import Queue
 from tools import logger
 import json
+from strategies import support_functions
 
 
 class Listener:
-    def __init__(self, bot: dict):
+    def __init__(self, bot: dict, assets):
         """
         The listener receives the data stream coming from the game trough the API. It maintains the current game state and a read only copy that the commander may access.
 
         :param bot: the bot dict.
         """
+        self.assets = assets
         self.logger = logger.get_logger(__name__, bot['name'])
         self.output_queue = Queue()
         self._game_state = {
@@ -38,24 +40,51 @@ class Listener:
 
     def update_game_state(self, data):
         self.logger.info('Updating game state')
-        # if data[0] == 'ping':
-        #     self._game_state['ping'] = time.time()
+
         # if data['message'] == 'CharacterSelectedSuccessMessage':
         #     self._game_state['level'] = data['content']['infos']['level']
         #
-        # if data['message'] == 'InventoryContentMessage':
-        #     self._game_state['kamas'] = data['content']['Kamas']
-        #     self._game_state['inventory'] = data['content']['objects']  # TODO: formatting
+        if data['message'] == 'InventoryContentMessage':
+            self._game_state['kamas'] = data['content']['kamas']
+            self._game_state['inventory'] = data['content']['objects']  # TODO: formatting
         #
         # if data['message'] == 'JobExperienceMultiUpdateMessage':
         #     self._game_state['jobs'] = data['content']['ExperiencesUpdate']  # TODO: formatting
         #
-        # if data['message'] == 'InventoryWeightMessage':
-        #     self._game_state['weight'] = data['content']['Weight']
-        #     self._game_state['max_weight'] = data['content']['WeightMax']
+
+        if data['message'] == 'CharacterSelectedSuccessMessage':
+            self._game_state['level'] = data['content']['infos']['level']
+
+        if data['message'] == 'CharacterLevelUpMessage':
+            self._game_state['level'] += 1
+
+        if data['message'] == 'InventoryWeightMessage':
+            self._game_state['weight'] = data['content']['weight']
+            self._game_state['max_weight'] = data['content']['weightMax']
 
         if data['message'] == 'CharacterLoadingCompleteMessage':
             self._game_state['connected'] = True
+
+        if data['message'] == 'MapComplementaryInformationsDataMessage':
+            self._game_state['map_id'] = int(data['content']['mapId'])
+            self._game_state['pos'] = support_functions.map_id_2_coord(self.assets['map_info'], self._game_state['map_id'])
+            for actor in data['content']['actors']:
+                if 'name' in actor.keys() and actor['name'] == self._game_state['name']:
+                    self._game_state['cell'] = actor['disposition']['cellId']
+
+            self._game_state['cell'] = support_functions.get_worldmap(self.assets['map_info'], self._game_state['map_id'])
+            self._game_state['map_mobs'] = []
+            self._game_state['map_npc'] = []
+            self._game_state['map_players'] = []
+            for actor in data['content']['actors']:
+                if actor['contextualId'] < 0:
+                    if 'npcId' in actor.keys():
+                        self._game_state['map_npc'].append(actor)
+                    if 'staticInfos' in actor.keys():
+                        self._game_state['map_mobs'].append(actor)
+                else:
+                    self._game_state['map_players'].append(actor)
+
 
         # if data['message'] == 'CharacterStatsListMessage':
         #     self._game_state['stats'] = data['payload']['Stats']  # TODO: formatting

@@ -9,6 +9,7 @@ from threading import Thread
 from websocket_server import WebsocketServer
 
 import strategies
+from strategies import support_functions, connect
 from client.commander import Commander
 from tools import logger
 
@@ -138,6 +139,6 @@ class SwarmNode:
 
 
 if __name__ == '__main__':
-    swarm_node = SwarmNode(host='localhost')
+    swarm_node = SwarmNode(host='0.0.0.0')
     # swarm_node.spawn_commander(bot={'id': 0, 'name': 'Ilancelet', 'username': '?', 'password': '?', 'server': 'Julith'})
     time.sleep(5)

@@ -212,6 +212,13 @@ def map_id_2_coord(map_info, map_id):
     raise Exception('Map id {} not in map info'.format(map_id))
 
 
+def get_worldmap(map_info, map_id):
+    for map in map_info:
+        if map['id'] == map_id:
+            return map['worldMap']
+    raise Exception('Map id {} not in map info'.format(map_id))
+
+
 def cells_2_map(cells):
     maps = np.array(cells)
     shape = maps.shape

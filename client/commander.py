@@ -23,7 +23,7 @@ class Commander:
         Popen(' '.join(args), shell=True)
         time.sleep(5)
         self.logger.info('Starting listener')
-        self.listener = Listener(self.bot)
+        self.listener = Listener(self.bot, self.assets)
         self.listener_thread = Thread(target=self.listener.run)
         self.listener_thread.start()
         self.logger.info('Starting connector')
