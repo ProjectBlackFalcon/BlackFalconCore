@@ -39,7 +39,7 @@ class Listener:
             self.game_state = json.loads(json.dumps(self._game_state))
 
     def update_game_state(self, data):
-        self.logger.info('Updating game state')
+        # self.logger.info('Updating game state')
 
         # if data['message'] == 'CharacterSelectedSuccessMessage':
         #     self._game_state['level'] = data['content']['infos']['level']
@@ -59,7 +59,7 @@ class Listener:
             self._game_state['level'] += 1
 
         if data['message'] == 'InventoryWeightMessage':
-            self._game_state['weight'] = data['content']['weight']
+            self._game_state['weight'] = data['content']['inventoryWeight']
             self._game_state['max_weight'] = data['content']['weightMax']
 
         if data['message'] == 'CharacterLoadingCompleteMessage':
@@ -72,7 +72,7 @@ class Listener:
                 if 'name' in actor.keys() and actor['name'] == self._game_state['name']:
                     self._game_state['cell'] = actor['disposition']['cellId']
 
-            self._game_state['cell'] = support_functions.get_worldmap(self.assets['map_info'], self._game_state['map_id'])
+            self._game_state['worldmap'] = support_functions.get_worldmap(self.assets['map_info'], self._game_state['map_id'])
             self._game_state['map_mobs'] = []
             self._game_state['map_npc'] = []
             self._game_state['map_players'] = []
