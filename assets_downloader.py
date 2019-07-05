@@ -18,9 +18,9 @@ def generate_file_md5(path, blocksize=2**20):
 
 def create_assets_checksums():
     checksums = {}
-    for file in os.listdir('assets'):
+    for file in os.listdir(os.path.abspath(os.path.join(os.path.dirname(__file__), 'assets'))):
         if file.endswith('.json'):
-            checksums[file.replace('.json', '')] = generate_file_md5('assets/' + file)
+            checksums[file.replace('.json', '')] = generate_file_md5(os.path.abspath(os.path.join(os.path.dirname(__file__), 'assets', file)))
     return checksums
 
 
@@ -32,7 +32,7 @@ def get_files_to_update(mongo_checksums, local_checksums):
     files_to_update = []
     for filename, checksum in mongo_checksums.items():
         if not filename in local_checksums.keys() or checksum != local_checksums[filename]:
-            print('Checksums don\'t match for', filename)
+            print('Checksum doesn\'t match for', filename, '- Expected', checksum, 'Got', local_checksums[filename])
             files_to_update.append(filename)
     return files_to_update
 
@@ -40,8 +40,9 @@ def get_files_to_update(mongo_checksums, local_checksums):
 def download_file(client, filename):
     print('Downloading ' + filename)
     data = client.blackfalcon.files.find_one({'filename': filename})
-    with open('assets/' + filename + '.json', 'w', encoding='utf8') as f:
+    with open(os.path.abspath(os.path.join(os.path.dirname(__file__), 'assets', filename + '.json')), 'w', encoding='utf8') as f:
         json.dump(data['payload'], f, ensure_ascii=False)
+    # print(generate_file_md5(os.path.abspath(os.path.join(os.path.dirname(__file__), 'assets', filename + '.json'))))
 
 
 def remove_deprecated_assets(client):

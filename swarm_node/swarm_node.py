@@ -1,4 +1,3 @@
-import ast
 import json
 import os
 import queue
@@ -9,9 +8,10 @@ from threading import Thread
 from websocket_server import WebsocketServer
 
 import strategies
-from strategies import support_functions, connect
+from strategies import support_functions, connect, move
 from client.commander import Commander
 from tools import logger
+import assets_downloader
 
 
 class SwarmNode:
@@ -33,6 +33,7 @@ class SwarmNode:
 
     def load_assets(self):
         start = time.time()
+        assets_downloader.update_assets()
         assets_paths = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets'))
         files_packs = {}
         self.logger.info('Mapping static assets')
@@ -64,7 +65,7 @@ class SwarmNode:
 
     def api_on_message(self, client, server, message):
         self.logger.info('Recieved from {}: {}'.format(client['address'], message))
-        message = ast.literal_eval(message)
+        message = json.loads(message)
         if 'id' not in message.keys():
             message['id'] = str(uuid.uuid4())
         self.cartography['messages'][message['id']] = client
