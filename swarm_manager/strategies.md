@@ -29,6 +29,14 @@ For the orders exchanged between the commander and the low level API, see the or
 }
 ````
 
+### Get game state
+````json
+{
+  "bot": "Mystinu",
+  "command": "get_game_state" 
+}
+````
+
 ### Connect
 ```json
 {
