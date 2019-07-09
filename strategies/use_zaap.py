@@ -2,6 +2,7 @@ import json
 import time
 
 import strategies
+from strategies import support_functions
 from tools import logger as log
 
 
@@ -25,11 +26,24 @@ def use_zaap(**kwargs):
     # TODO: Check that the map has a zaap
 
     # Move the bot the appropriate cell to activate the zaap
+    zaap_cell, element_id, skill_uid = None, None, None
     current_cell = listener.game_state['cell']
     current_map = listener.game_state['pos']
-    zaap_cell = None  # TODO
+    for element in listener.game_state['map_elements']:
+        if 'enabledSkills' in element.keys():
+            if 'skillId' in element['enabledSkills'].keys() and element['enabledSkills']['skillId'] == 114:
+                element_id = element['elementId']
+                zaap_cell = assets['elements_info'][str(listener.game_state['map_id'])][element_id]
+                skill_uid = element['enabledSkills']['skillInstanceUid']
+
+    if zaap_cell is None and element_id is not None and skill_uid is not None:
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': time.time() - start, 'Reason': 'Could not find a Zaap at {}, map id : {}'.format(current_map, listener.game_state['map_id'])}
+        }
+
     zaap_use_cell = strategies.support_functions.get_closest_walkable_neighbour_cell(assets['map_info'], zaap_cell, current_cell, current_map, current_cell)
-    report = strategies.move(
+    report = strategies.move.move(
         listener=listener,
         strategy={'bot': strategy['bot'], 'parameters': {'cell': zaap_use_cell}},
         orders_queue=orders_queue
@@ -45,9 +59,6 @@ def use_zaap(**kwargs):
     # TODO: Check that the bot knows the destination's zaap
     # TODO: Use it to go to destination
 
-    zaap_skill_id = 114
-    element_id = 00000  # TODO Get from gamestate
-    skill_uid = 00000  # TODO Get from gamestate
     order = {
         'command': 'use_interactive',
         'parameters': {
