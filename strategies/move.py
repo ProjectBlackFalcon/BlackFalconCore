@@ -18,6 +18,7 @@ def move(**kwargs):
     assets = kwargs['assets']
 
     logger = log.get_logger(__name__, strategy['bot'])
+    actual_start = time.time()
 
     if 'cell' in listener.game_state.keys():
         if listener.game_state['cell'] == strategy['parameters']['cell']:
@@ -31,11 +32,14 @@ def move(**kwargs):
 
     current_pos = '{};{}'.format(listener.game_state['pos'][0], listener.game_state['pos'][1])
     map_data = strategies.support_functions.fetch_map(assets['map_info'], current_pos, listener.game_state['worldmap'])
+    deserialized_raw_cells = []
+    for cell in map_data['rawCells']:
+        deserialized_raw_cells.append(assets['map_info_index'][cell])
     order = {
         'command': 'move',
         'parameters': {
             "isUsingNewMovementSystem": map_data['isUsingNewMovementSystem'],
-            "cells": map_data['rawCells'],
+            "cells": deserialized_raw_cells,
             "target_cell": strategy['parameters']['cell']
         }
     }
@@ -56,12 +60,31 @@ def move(**kwargs):
         logger.warn('Failed moving to cell {} in {}s'.format(strategy['parameters']['cell'], execution_time))
         strategy['report'] = {
             'success': False,
-            'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
+            'details': {'Execution time': execution_time, 'Reason': 'Timeout, no map movement for bot'}
         }
         log.close_logger(logger)
         return strategy
 
-    logger.info('Completed move to cell {} in {}s'.format(strategy['parameters']['cell'], execution_time))
+    start = time.time()
+    timeout = 20 if 'timeout' not in strategy.keys() else strategy['timeout']
+    waiting = True
+    while waiting and time.time() - start < timeout:
+        if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
+            if not listener.game_state['currently_walking']:
+                waiting = False
+        time.sleep(0.05)
+    execution_time = time.time() - start
+
+    if waiting:
+        logger.warn('Failed moving to cell {} in {}s'.format(strategy['parameters']['cell'], execution_time))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': execution_time, 'Reason': 'Timeout, no movement confirmation'}
+        }
+        log.close_logger(logger)
+        return strategy
+
+    logger.info('Completed move to cell {} in {}s'.format(strategy['parameters']['cell'], time.time() - actual_start))
     strategy['report'] = {
         'success': True,
         'details': {'Execution time': execution_time}
