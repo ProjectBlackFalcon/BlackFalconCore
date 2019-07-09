@@ -11,7 +11,6 @@ class Connection:
     def __init__(self, host, port, orders_queue, output_queue, bot=None):
         self.host = host
         self.port = port
-        print(bot)
         self.logger = logger.get_logger(__name__, 'Connection-{}-{}'.format(host, port) if bot is None else bot['name'])
         self.orders_queue = orders_queue
         self.output_queue = output_queue
