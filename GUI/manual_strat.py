@@ -1,9 +1,10 @@
+import ast
 import json
 import queue
 from threading import Thread
 from tkinter import *
 import requests
-from tools import ws_connector
+import ws_connector
 
 
 def get_strategies():
@@ -61,7 +62,7 @@ def pick_dropdown(*args):
 
                 form.append(field)
     form.append(strat['command'])
-    Button(form_frame, text='GO', command= lambda: execute_strat(form)).grid(row=len(form) + 1, column=2)
+    Button(form_frame, text='GO', command=lambda: execute_strat(form)).grid(row=len(form) + 1, column=2)
 
 
 def execute_strat(form):
@@ -71,10 +72,15 @@ def execute_strat(form):
     }
     parameters = {}
     for field in form[:-1]:
-        parameters[field[0].cget('text')] = field[1].get()
+        parameters[field[0].cget('text')] = ast.literal_eval(field[1].get()) if field[1].get().isdigit() else field[1].get()
     strategy['parameters'] = parameters
 
     orders.put((json.dumps(strategy),))
+
+
+def login(orders):
+    print('Logging in')
+    Thread(target=ws_connector.Connection, args=(address.get(), port.get(), orders, queue.Queue())).start()
 
 
 strategies = get_strategies()
@@ -97,10 +103,11 @@ port.insert(END, 8721)
 port.grid(row=1, column=2)
 
 orders = queue.Queue()
-Button(login_frame, text='Login', command=lambda: Thread(target=ws_connector.Connection, args=(address.get(), port.get(), orders, queue.Queue())).start()).grid(row=2, column=2)
+Button(login_frame, text='Login', command=lambda: login(orders)).grid(row=2, column=2)
 
 Label(main_frame, text="Bot name").grid(row=2, column=1)
 bot_name = Entry(main_frame)
+bot_name.insert(END, 'Mystinu')
 bot_name.grid(row=2, column=2)
 
 selected_strat = StringVar(tk)
@@ -114,4 +121,5 @@ selected_strat.trace('w', pick_dropdown)
 form_frame = Frame(tk)
 form_frame.grid(row=5, column=1)
 
+orders.put((json.dumps({"bot": "Mystinu", "command": "connect", "parameters": {}}),))
 tk.mainloop()
