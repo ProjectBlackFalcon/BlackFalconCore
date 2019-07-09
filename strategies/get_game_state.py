@@ -25,7 +25,7 @@ def get_game_state(**kwargs):
         'Fetched game state in {}s'.format(execution_time))
     strategy['report'] = {
         'success': True,
-        'details': {'Execution time': execution_time, 'game_state': json.dumps(game_state, indent=2)}
+        'details': {'Execution time': execution_time, 'game_state': (game_state['pos'], game_state['worldmap'], game_state['cell'])}
     }
     log.close_logger(logger)
     return strategy
