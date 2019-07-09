@@ -21,8 +21,9 @@ class Listener:
             'username': bot['username'],
             'password': bot['password'],
             'server': bot['server'],
-            'level': 0,
             'npc_dialog_open': False,
+            'npc_current_question': None,
+            'npc_possible_replies': None,
             'zaap_dialog_open': False
         }
         self.game_state = json.loads(json.dumps(self._game_state))
@@ -39,27 +40,19 @@ class Listener:
             self.game_state = json.loads(json.dumps(self._game_state))
 
     def update_game_state(self, data):
-        self.logger.info('Updating game state')
-
-        # if data['message'] == 'CharacterSelectedSuccessMessage':
-        #     self._game_state['level'] = data['content']['infos']['level']
-        #
         if data['message'] == 'InventoryContentMessage':
             self._game_state['kamas'] = data['content']['kamas']
             self._game_state['inventory'] = data['content']['objects']  # TODO: formatting
-        #
-        # if data['message'] == 'JobExperienceMultiUpdateMessage':
-        #     self._game_state['jobs'] = data['content']['ExperiencesUpdate']  # TODO: formatting
-        #
 
         if data['message'] == 'CharacterSelectedSuccessMessage':
             self._game_state['level'] = data['content']['infos']['level']
+            self._game_state['actor_id'] = data['content']['infos']['id']
 
         if data['message'] == 'CharacterLevelUpMessage':
             self._game_state['level'] += 1
 
         if data['message'] == 'InventoryWeightMessage':
-            self._game_state['weight'] = data['content']['weight']
+            self._game_state['weight'] = data['content']['inventoryWeight']
             self._game_state['max_weight'] = data['content']['weightMax']
 
         if data['message'] == 'CharacterLoadingCompleteMessage':
@@ -72,10 +65,11 @@ class Listener:
                 if 'name' in actor.keys() and actor['name'] == self._game_state['name']:
                     self._game_state['cell'] = actor['disposition']['cellId']
 
-            self._game_state['cell'] = support_functions.get_worldmap(self.assets['map_info'], self._game_state['map_id'])
+            self._game_state['worldmap'] = support_functions.get_worldmap(self.assets['map_info'], self._game_state['map_id'])
             self._game_state['map_mobs'] = []
             self._game_state['map_npc'] = []
             self._game_state['map_players'] = []
+            self._game_state['map_elements'] = []
             for actor in data['content']['actors']:
                 if actor['contextualId'] < 0:
                     if 'npcId' in actor.keys():
@@ -84,18 +78,32 @@ class Listener:
                         self._game_state['map_mobs'].append(actor)
                 else:
                     self._game_state['map_players'].append(actor)
+            if 'interactiveElements' in data['content'].keys():
+                for element in data['content']['interactiveElements']:
+                    if element['onCurrentMap']:
+                        self._game_state['map_elements'].append(element)
 
+        if data['message'] == 'GameMapMovementMessage':
+            if data['content']['actorId'] == self._game_state['actor_id']:
+                self._game_state['cell'] = data['content']['keyMovements'][-1]
+                self._game_state['currently_walking'] = True
 
-        # if data['message'] == 'CharacterStatsListMessage':
-        #     self._game_state['stats'] = data['payload']['Stats']  # TODO: formatting
+        if data['message'] == 'GameMapMovementConfirmMessage':
+            self._game_state['currently_walking'] = False
 
-        # if data['id'] == 5617:
-        #     self._game_state['npc_dialog_open'] = True
-        # if data['id'] == 6830:
-        #     self._game_state['zaap_dialog_open'] = True
-        # if data['id'] == 5502:
-        #     self._game_state['npc_dialog_open'] = False
-        #     self._game_state['zaap_dialog_open'] = False
+        if data['message'] == 'NpcDialogQuestionMessage':
+            self._game_state['npc_dialog_open'] = True
+            self._game_state['npc_current_question'] = data['content']['messageId']
+            self._game_state['npc_possible_replies'] = data['content']['visibleReplies']
+
+        if data['message'] == 'ZaapDestinationsMessage':
+            self._game_state['zaap_dialog_open'] = True
+
+        if data['message'] == 'LeaveDialogMessage':
+            self._game_state['npc_dialog_open'] = False
+            self._game_state['zaap_dialog_open'] = False
+            self._game_state['npc_current_question'] = None
+            self._game_state['npc_possible_replies'] = None
 
     def received_message(self, start_time, message_id):
         for message in self.messages_queue:
