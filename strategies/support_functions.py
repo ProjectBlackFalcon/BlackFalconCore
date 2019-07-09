@@ -207,14 +207,14 @@ def fetch_map(map_info, coord, worldmap):
 
 def map_id_2_coord(map_info, map_id):
     for map in map_info:
-        if map['id'] == map_id:
+        if int(map['id']) == map_id:
             return [int(coord) for coord in map['coord'].split(';')]
     raise Exception('Map id {} not in map info'.format(map_id))
 
 
 def get_worldmap(map_info, map_id):
     for map in map_info:
-        if map['id'] == map_id:
+        if int(map['id']) == map_id:
             return map['worldMap']
     raise Exception('Map id {} not in map info'.format(map_id))
 
