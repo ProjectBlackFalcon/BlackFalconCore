@@ -1,7 +1,12 @@
+import os
+from random import randint
+
+import socket
+
 import queue
 from threading import Thread
 
-from subprocess import Popen
+from subprocess import Popen, PIPE
 
 import time
 
@@ -19,7 +24,10 @@ class Commander:
         self.reports_queue = reports_queue
         self.assets = assets
         self.logger.info('Starting LL API')
-        args = ['java', '-jar', 'black-falcon-api-1.0-jar-with-dependencies.jar', '-p', str(self.bot['id'] + 10000)]
+        self.port = randint(10000, 20000)
+        while not self.try_port(self.port):
+            self.port = randint(10000, 20000)
+        args = ['java', '-jar', os.path.join(os.path.dirname(__file__), '..', 'black-falcon-api-1.0-jar-with-dependencies.jar'), '-p', str(self.port)]
         Popen(' '.join(args), shell=True)
         time.sleep(5)
         self.logger.info('Starting listener')
@@ -28,7 +36,7 @@ class Commander:
         self.listener_thread.start()
         self.logger.info('Starting connector')
         self.orders_queue = queue.Queue()
-        self.connection = Thread(target=Connection, args=('localhost', self.bot['id'] + 10000, self.orders_queue, self.listener.output_queue, self.bot))
+        self.connection = Thread(target=Connection, args=('localhost', self.port, self.orders_queue, self.listener.output_queue, self.bot))
         self.connection.start()
         self.logger.info('New commander spawned for {}'.format(self.bot['name']))
         self.run()
@@ -59,13 +67,17 @@ class Commander:
         self.logger.info('Sending order to bot API: {}'.format(order))
         self.orders_queue.put((order, ))
 
+    def try_port(self, port):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = False
+        try:
+            sock.bind(("localhost", port))
+            result = True
+        except:
+            pass
+        sock.close()
+        return result
+
 
 if __name__ == '__main__':
-    bot = {'id': 0, 'name': 'Ilancelet'}
-    order = {
-        'version': 1,
-        'command': 'Close',
-    }
-    strats = queue.Queue()
-    commander = Commander(bot, strats)
-    commander.send_order(order)
+    pass
