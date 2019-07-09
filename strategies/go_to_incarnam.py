@@ -23,8 +23,23 @@ def go_to_incarnam(**kwargs):
 
     # Enter the portal room
     door_skill_id = 184
-    element_id = 00000  # TODO Get from gamestate
-    skill_uid = 00000  # TODO Get from gamestate
+    element_id, skill_uid = None, None
+    for element in listener.game_state['map_elements']:
+        if 'enabledSkills' in element.keys():
+            for skill in element['enabledSkills']:
+                if 'skillId' in skill.keys() and skill['skillId'] == door_skill_id:
+                    element_id = element['elementId']
+                    skill_uid = skill['skillInstanceUid']
+
+    if element_id is None or skill_uid is None:
+        logger.warn('Failed entering the portal room in {}s'.format(0))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': 0, 'Reason': 'Could not find skill UID or element id'}
+        }
+        log.close_logger(logger)
+        return strategy
+
     order = {
         'command': 'use_interactive',
         'parameters': {
@@ -40,7 +55,7 @@ def go_to_incarnam(**kwargs):
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'pos' in listener.game_state.keys():
-            if listener.game_state['worldmap'] == -1:
+            if listener.game_state['map_id'] == 192416776:
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
@@ -56,11 +71,54 @@ def go_to_incarnam(**kwargs):
 
     logger.info('Entered the portal room in {}s'.format(execution_time))
 
+    # Go to cell 468
+    order = {
+        'command': 'move',
+        'parameters': {
+            "isUsingNewMovementSystem": False,
+            "cells": [[True, False, 0, 0, True, 0] for _ in range(560)],
+            "target_cell": 468
+        }
+    }
+    logger.info('Sending order to bot API: {}'.format(order))
+    orders_queue.put((json.dumps(order),))
+
+    start = time.time()
+    timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
+    waiting = True
+    while waiting and time.time() - start < timeout:
+        if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
+            if listener.game_state['cell'] == 468:
+                waiting = False
+        time.sleep(0.05)
+    execution_time = time.time() - start
+    if waiting:
+        logger.warning('Failed going to cell 468 in {}s'.format(execution_time))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
+        }
+        log.close_logger(logger)
+        return strategy
+
     # Use the portal
-    # Check if Incarnam's portal is an interactive or an NPC ?
     door_skill_id = 184
-    element_id = 00000  # TODO Get from gamestate
-    skill_uid = 00000  # TODO Get from gamestate
+    element_id, skill_uid = None, None
+    for element in listener.game_state['map_elements']:
+        if 'enabledSkills' in element.keys():
+            for skill in element['enabledSkills']:
+                if 'skillId' in skill.keys() and skill['skillId'] == door_skill_id:
+                    element_id = element['elementId']
+                    skill_uid = skill['skillInstanceUid']
+
+    if element_id is None or skill_uid is None:
+        logger.warn('Failed entering the portal room in {}s'.format(0))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': 0, 'Reason': 'Could not find skill UID or element id'}
+        }
+        log.close_logger(logger)
+        return strategy
     order = {
         'command': 'use_interactive',
         'parameters': {

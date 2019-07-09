@@ -21,6 +21,7 @@ def go_to_astrub(**kwargs):
 
     global_start, start = time.time(), time.time()
 
+    # Open NPC
     order = {
         'command': 'open_npc',
         'parameters': {
@@ -41,7 +42,7 @@ def go_to_astrub(**kwargs):
 
     execution_time = time.time() - start
     if waiting:
-        logger.warning('Failed going through the portal from Incarnam to Astrub in {}s'.format(execution_time))
+        logger.warning('Failed to open NPC dialog in {}s'.format(execution_time))
         strategy['report'] = {
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
@@ -49,10 +50,40 @@ def go_to_astrub(**kwargs):
         log.close_logger(logger)
         return strategy
 
+    # Answer first question
     order = {
         'command': 'answer_npc',
         'parameters': {
-            'reply_id': 36982
+            'reply_id': listener.game_state['npc_possible_replies'][0]
+        }
+    }
+    logger.info('Sending order to bot API: {}'.format(order))
+    orders_queue.put((json.dumps(order),))
+
+    start = time.time()
+    timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
+    waiting = True
+    while waiting and time.time() - start < timeout:
+        if 'pos' in listener.game_state.keys():
+            if listener.game_state['npc_current_question'] in [30639, 30638]:
+                waiting = False
+        time.sleep(0.05)
+
+    execution_time = time.time() - start
+    if waiting:
+        logger.warning('Failed answering first question in {}s'.format(execution_time))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
+        }
+        log.close_logger(logger)
+        return strategy
+
+    # Answer second question
+    order = {
+        'command': 'answer_npc',
+        'parameters': {
+            'reply_id': listener.game_state['npc_possible_replies'][0]
         }
     }
     logger.info('Sending order to bot API: {}'.format(order))
@@ -69,7 +100,7 @@ def go_to_astrub(**kwargs):
 
     execution_time = time.time() - start
     if waiting:
-        logger.warning('Failed going through the portal from Incarnam to Astrub in {}s'.format(execution_time))
+        logger.warning('Failed answering second question in {}s'.format(execution_time))
         strategy['report'] = {
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
@@ -77,22 +108,60 @@ def go_to_astrub(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    report = strategies.change_map(
-        listener=listener,
-        strategy={
-            'bot': strategy['bot'],
-            'parameters': {
-                'cell': 508,
-                'direction': 'w'
-            }
-        },
-        orders_queue=orders_queue
-    )
-    execution_time = time.time() - global_start
-    if not report['success']:
+    # Go to cell 548
+    order = {
+        'command': 'move',
+        'parameters': {
+            "isUsingNewMovementSystem": False,
+            "cells": [[True, False, 0, 0, True, 0] for _ in range(560)],
+            "target_cell": 548
+        }
+    }
+    logger.info('Sending order to bot API: {}'.format(order))
+    orders_queue.put((json.dumps(order),))
+
+    start = time.time()
+    timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
+    waiting = True
+    while waiting and time.time() - start < timeout:
+        if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
+            if listener.game_state['cell'] == 548:
+                waiting = False
+        time.sleep(0.05)
+    execution_time = time.time() - start
+    if waiting:
+        logger.warning('Failed going to cell 548 in {}s'.format(execution_time))
         strategy['report'] = {
             'success': False,
-            'details': {'Execution time': time.time() - start, 'Reason': 'Exiting portal room failed'}
+            'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
+        }
+        log.close_logger(logger)
+        return strategy
+
+    # Change map to 192416777
+    order = {
+        'command': 'change_map',
+        'parameters': {
+            'target_map_id': 192416777
+        }
+    }
+    logger.info('Sending order to bot API: {}'.format(order))
+    orders_queue.put((json.dumps(order),))
+
+    start = time.time()
+    timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
+    waiting = True
+    while waiting and time.time() - start < timeout:
+        if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
+            if listener.game_state['map_id'] == 191106048:
+                waiting = False
+        time.sleep(0.05)
+    execution_time = time.time() - start
+    if waiting:
+        logger.warning('Failed going to cell 468 in {}s'.format(execution_time))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
         }
         log.close_logger(logger)
         return strategy

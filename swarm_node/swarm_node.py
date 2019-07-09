@@ -1,17 +1,20 @@
-import ast
 import json
 import os
 import queue
 import time
 import uuid
+from multiprocessing import cpu_count
+from multiprocessing.pool import Pool
 from threading import Thread
 
 from websocket_server import WebsocketServer
 
 import strategies
 from strategies import support_functions, connect
+from strategies import *
 from client.commander import Commander
 from tools import logger
+import assets_downloader
 
 
 class SwarmNode:
@@ -33,6 +36,7 @@ class SwarmNode:
 
     def load_assets(self):
         start = time.time()
+        assets_downloader.update_assets()
         assets_paths = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets'))
         files_packs = {}
         self.logger.info('Mapping static assets')
@@ -49,22 +53,38 @@ class SwarmNode:
         self.logger.info('Loading static assets...')
         for asset_name, file_pack in files_packs.items():
             self.logger.info('Loading asset: {}'.format(asset_name))
-            for file in file_pack:
-                with open(assets_paths + '/' + file, 'r', encoding='utf8') as f:
-                    data = json.load(f)
-                if asset_name not in self.assets.keys():
-                    self.assets[asset_name] = data
-                else:
-                    if type(data) is list:
-                        self.assets[asset_name] += data
-                    elif type(data) is dict:
-                        self.assets[asset_name].update(data)
-
+            if len(file_pack) <= 4:
+                for file in file_pack:
+                    with open(assets_paths + '/' + file, 'r', encoding='utf8') as f:
+                        data = json.load(f)
+                    if asset_name not in self.assets.keys():
+                        self.assets[asset_name] = data
+                    else:
+                        if type(data) is list:
+                            self.assets[asset_name] += data
+                        elif type(data) is dict:
+                            self.assets[asset_name].update(data)
+            else:
+                with Pool(cpu_count() - 1) as p:
+                    results_list = p.map(self.load_asset_chunk, [assets_paths + '/' + file_name for file_name in file_pack])
+                for asset_chunk in results_list:
+                    if asset_name not in self.assets.keys():
+                        self.assets[asset_name] = asset_chunk
+                    else:
+                        if type(asset_chunk) is list:
+                            self.assets[asset_name] += asset_chunk
+                        elif type(asset_chunk) is dict:
+                            self.assets[asset_name].update(asset_chunk)
         self.logger.info('Done loading assets in {}s'.format(round(time.time() - start, 2)))
+
+    def load_asset_chunk(self, file_path):
+        with open(file_path, 'r', encoding='utf8') as f:
+            chunk = json.load(f)
+        return chunk
 
     def api_on_message(self, client, server, message):
         self.logger.info('Recieved from {}: {}'.format(client['address'], message))
-        message = ast.literal_eval(message)
+        message = json.loads(message)
         if 'id' not in message.keys():
             message['id'] = str(uuid.uuid4())
         self.cartography['messages'][message['id']] = client
@@ -72,22 +92,22 @@ class SwarmNode:
 
         if message['command'] == 'new_bot':
             intercept_command = True
-            self.logger.info('Creating new bot : ' + str(message['parameters']['bot']))
+            self.logger.info('Creating new bot : ' + str(message['parameters']))
             try:
                 strategies.support_functions.create_profile(
-                    id=message['parameters']['bot']['id'],
-                    bot_name=message['parameters']['bot']['name'],
-                    password=message['parameters']['bot']['password'],
-                    username=message['parameters']['bot']['username'],
-                    server=message['parameters']['bot']['server']
+                    id=message['parameters']['id'],
+                    bot_name=message['bot'],
+                    password=message['parameters']['password'],
+                    username=message['parameters']['username'],
+                    server=message['parameters']['server']
                 )
-                self.logger.info('Created : ' + str(message['parameters']['bot']['name']))
+                self.logger.info('Created : ' + str(message['bot']))
                 message['success'] = True
                 message['details'] = {}
                 self.api.send_message(client, json.dumps(message))
             except Exception as e:
                 if e.args[0] == 'Bot already exists. Delete it using the \'delete_bot\' command first.':
-                    self.logger.warn('Failed creating : ' + str(message['parameters']['bot']['name']))
+                    self.logger.warn('Failed creating : ' + str(message['bot']))
                     message['success'] = False
                     message['details'] = {'reason': e.args[0]}
                     self.api.send_message(client, json.dumps(message))
@@ -96,13 +116,12 @@ class SwarmNode:
                 return
 
         if message['command'] == 'delete_bot':
-            intercept_command = True
-            strategies.support_functions.delete_profile(message['parameters']['name'])
+            strategies.support_functions.delete_profile(message['bot'])
             message['success'] = True
             message['details'] = {}
-            if message['parameters']['name'] in self.cartography.keys():
+            if message['bot'] in self.cartography.keys():
                 # TODO: This is shit, implement a kill commander order or something.
-                del self.cartography[message['parameters']['name']]
+                del self.cartography[message['bot']]
             self.api.send_message(client, json.dumps(message))
             return
 

@@ -4,6 +4,7 @@
 {
     "name": "Mystinu",
     "id": 1,
+    "actor_id": 1542684254,
     "username": "blackfalcon0",
     "password": "...",
     "server": "Julith",
@@ -17,7 +18,10 @@
     "max_weight": 2000,
     "inventory": [],
     "npc_dialog_open": false,
+    "npc_current_question": [],
+    "npc_possible_replies": [],
     "zaap_dialog_open": false,
+    "currently_walking": false,
     "map_mobs": [
         {
             "contextualId":-20004.0,
@@ -51,6 +55,22 @@
             "npcId":1088
         }
     ],
-    "map_players": []
+    "map_players": [],
+    "map_elements": [
+        {  
+            "elementId":516111,
+            "elementTypeId":316,
+            "enabledSkills":[  
+                {  
+                    "skillId":360,
+                    "skillInstanceUid":91092864
+                }
+            ],
+            "disabledSkills":[  
+
+            ],
+            "onCurrentMap": true
+         }
+    ]
 }
 ````

@@ -23,13 +23,16 @@ def change_map(**kwargs):
     direction = strategy['parameters']['direction']  # 'n', 's', 'w', 'e'
 
     global_start, start = time.time(), time.time()
-    report = strategies.move(
+    report = strategies.move.move(
         strategy={
             'bot': strategy['bot'],
             'command': 'move',
-            'parameters': cell
+            'parameters': {
+                'cell': cell
+            }
         },
         listener=listener,
+        assets=assets,
         orders_queue=orders_queue
     )['report']
 
@@ -41,9 +44,10 @@ def change_map(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    current_map = listener.game_state['pos']
-    target_map = [sum(term) for term in zip(current_map, [(0, -1), (0, 1), (-1, 0), (1, 0)][('n', 's', 'w', 'e').index(direction)])]
-    target_map_id = strategies.support_functions.fetch_map(assets['map_info'], '{};{}'.format(target_map[0], target_map[1]), listener.game_state['worldmap'])
+    current_map_id = listener.game_state['map_id']
+    current_pos = '{};{}'.format(listener.game_state['pos'][0], listener.game_state['pos'][1])
+    map_data = strategies.support_functions.fetch_map(assets['map_info'], current_pos, listener.game_state['worldmap'])
+    target_map_id = map_data['neighbours'][direction]
     order = {
         'command': strategy['command'],
         'parameters': {
@@ -59,13 +63,13 @@ def change_map(**kwargs):
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'pos' in listener.game_state.keys():
-            if listener.game_state['pos'] == target_map:
+            if listener.game_state['map_id'] != current_map_id:
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
 
     if waiting:
-        logger.warn('Failed changing map from {} to {} through cell {} in {}s'.format(current_map, target_map, cell, execution_time))
+        logger.warn('Failed changing map from {} through cell {} in {}s'.format(current_pos, cell, execution_time))
         strategy['report'] = {
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
@@ -73,7 +77,7 @@ def change_map(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    logger.info('Changed map from {} to {} through cell {} in {}s'.format(current_map, target_map, cell, execution_time))
+    logger.info('Changed map from {} through cell {} in {}s'.format(current_pos, cell, execution_time))
     strategy['report'] = {
         'success': True,
         'details': {'Execution time': execution_time}

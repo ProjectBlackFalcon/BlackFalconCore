@@ -1,3 +1,4 @@
+import json
 import queue
 
 import websocket
@@ -10,7 +11,7 @@ class Connection:
     def __init__(self, host, port, orders_queue, output_queue, bot=None):
         self.host = host
         self.port = port
-        self.logger = logger.get_logger(__name__, bot['name'] if bot is not None else 'Connection-{}-{}'.format(host, port))
+        self.logger = logger.get_logger(__name__, 'Connection-{}-{}'.format(host, port) if bot is None else bot['name'])
         self.orders_queue = orders_queue
         self.output_queue = output_queue
         self.connection_string = 'ws://{}:{}'.format(host, port)
@@ -28,6 +29,7 @@ class Connection:
 
     def on_close(self):
         self.logger.info("Websocket at {} closed".format(self.connection_string))
+        logger.close_logger(self.logger)
 
     def on_open(self):
         self.logger.info('Connection established to websocket at ' + self.connection_string + ', ready to send orders')
@@ -42,21 +44,15 @@ class Connection:
 
 
 if __name__ == '__main__':
-    orders = queue.Queue()
-    t = Thread(target=Connection, args=('localhost', 8721, orders, queue.Queue()))
-    t.start()
+    pass
+    # orders = queue.Queue()
+    # t = Thread(target=Connection, args=('89.234.181.110', 8721, orders, queue.Queue()))
+    # t.start()
+    # 
+    # strategy = {
+    #       "bot": "Mystinu",
+    #       "command": "connect"
+    #     }
+    # orders.put((json.dumps(strategy),))
 
-    orders.put(({
-        'bot': 'Ilancelet',
-        'command': 'delete_bot',
-        'parameters': {"name": "Ilancelet"}
-               },))
-
-    order = {
-        'bot': 'Ilancelet',
-        'command': 'ping',
-        'version': 1,
-        'parameters': None
-    }
-    orders.put((order, ))
 
