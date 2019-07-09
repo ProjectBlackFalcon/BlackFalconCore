@@ -4,6 +4,39 @@ These are the messages exchanged from the Swarm Manager to the commander.
 
 For the orders exchanged between the commander and the low level API, see the orders.md in the strategies folder.
 
+
+### Add bot
+````json
+{
+  "bot": "Mystinu",
+  "command": "new_bot",
+  "parameters": {
+    "id": 1,
+    "name": "Mystinu",
+    "username": "blackfalcon0",
+    "password": "...",
+    "server": "Julith"
+  }
+  
+}
+````
+
+### Delete bot
+````json
+{
+  "bot": "Mystinu",
+  "command": "delete_bot" 
+}
+````
+
+### Get game state
+````json
+{
+  "bot": "Mystinu",
+  "command": "get_game_state" 
+}
+````
+
 ### Connect
 ```json
 {
@@ -126,5 +159,16 @@ For the orders exchanged between the commander and the low level API, see the or
 {
   "bot": "Mystinu",
   "command": "exit_hunting_hall"
+}
+````
+
+### Use Zaap
+````json
+{
+  "bot": "Mystinu",
+  "command": "use_zaap",
+  "parameters": {
+    "destination": [1, -32]
+  }
 }
 ````
