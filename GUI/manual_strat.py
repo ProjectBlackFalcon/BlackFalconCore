@@ -136,7 +136,14 @@ def execute_strat(form):
     }
     parameters = {}
     for field in form[:-1]:
-        parameters[field[0].cget('text')] = ast.literal_eval(field[1].get()) if field[1].get().isdigit() else field[1].get()
+        try:
+            number = int(field[1].get())
+            parameters[field[0].cget('text')] = number
+        except:
+            if field[1].get() == '':
+                parameters[field[0].cget('text')] = None
+            else:
+                parameters[field[0].cget('text')] = field[1].get()
     strategy['parameters'] = parameters
 
     success_label = Label(form_frame, text='Pending...', fg='orange')
