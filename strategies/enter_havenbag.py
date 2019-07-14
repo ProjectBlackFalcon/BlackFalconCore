@@ -27,8 +27,8 @@ def enter_havenbag(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
-        if listener.game_state['pos'] == [0, 0] and listener.game_state['worldmap'] == -1:
+    if 'in_haven_bag' in listener.game_state.keys():
+        if listener.game_state['in_haven_bag']:
             logger.info('Entered havenbag in {}s'.format(0))
             strategy['report'] = {
                 'success': True,
@@ -47,8 +47,8 @@ def enter_havenbag(**kwargs):
     timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
     waiting = True
     while waiting and time.time() - start < timeout:
-        if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
-            if listener.game_state['pos'] == (0, 0) and listener.game_state['worldmap'] == -1:
+        if 'in_haven_bag' in listener.game_state.keys():
+            if listener.game_state['in_haven_bag']:
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start

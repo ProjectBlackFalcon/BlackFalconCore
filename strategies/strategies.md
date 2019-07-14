@@ -168,7 +168,8 @@ For the orders exchanged between the commander and the low level API, see the or
   "bot": "Mystinu",
   "command": "use_zaap",
   "parameters": {
-    "destination": [1, -32]
+    "destination_x": 1,
+    "destination_y": -32
   }
 }
 ````

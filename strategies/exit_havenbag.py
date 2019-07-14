@@ -18,8 +18,8 @@ def exit_havenbag(**kwargs):
 
     logger = log.get_logger(__name__, strategy['bot'])
 
-    if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
-        if listener.game_state['pos'] != (0, 0) or listener.game_state['worldmap'] != -1:
+    if 'in_haven_bag' in listener.game_state.keys():
+        if not listener.game_state['in_haven_bag']:
             logger.info('Exited havenbag in {}s'.format(0))
             strategy['report'] = {
                 'success': True,
@@ -38,8 +38,8 @@ def exit_havenbag(**kwargs):
     timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
     waiting = True
     while waiting and time.time() - start < timeout:
-        if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
-            if listener.game_state['pos'] != [0, 0] or listener.game_state['worldmap'] != -1:
+        if 'in_haven_bag' in listener.game_state.keys():
+            if not listener.game_state['in_haven_bag']:
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start

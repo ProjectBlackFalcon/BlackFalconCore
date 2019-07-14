@@ -27,10 +27,11 @@ def get_game_state(**kwargs):
     pos = game_state['pos'] if 'pos' in game_state else [-100, -100]
     worldmap = game_state['worldmap'] if 'worldmap' in game_state else -100
     cell = game_state['cell'] if 'cell' in game_state else -100
+    in_haven_bag = game_state['in_haven_bag'] if 'in_haven_bag' in game_state.keys() else None
 
     strategy['report'] = {
         'success': True,
-        'details': {'Execution time': execution_time, 'game_state': (pos, worldmap, cell)}
+        'details': {'Execution time': execution_time, 'game_state': (pos, worldmap, cell, in_haven_bag)}
     }
     log.close_logger(logger)
     return strategy

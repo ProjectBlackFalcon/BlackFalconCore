@@ -17,10 +17,27 @@
     "weight": 122,
     "max_weight": 2000,
     "inventory": [],
+    "in_haven_bag": false,
     "npc_dialog_open": false,
     "npc_current_question": [],
     "npc_possible_replies": [],
     "zaap_dialog_open": false,
+    "zaap_destinations": [ 
+         { 
+            "type":0,
+            "mapId":191105026.0,
+            "subAreaId":95,
+            "level":10,
+            "cost":0
+         },
+         { 
+            "type":0,
+            "mapId":120062979.0,
+            "subAreaId":30,
+            "level":20,
+            "cost":140
+         }
+    ],
     "currently_walking": false,
     "map_mobs": [
         {
@@ -60,17 +77,15 @@
         {  
             "elementId":516111,
             "elementTypeId":316,
-            "enabledSkills":[  
+            "enabledSkills":[
                 {  
                     "skillId":360,
                     "skillInstanceUid":91092864
                 }
             ],
-            "disabledSkills":[  
-
-            ],
+            "disabledSkills":[],
             "onCurrentMap": true
-         }
+        }
     ]
 }
 ````

@@ -24,7 +24,8 @@ class Listener:
             'npc_dialog_open': False,
             'npc_current_question': None,
             'npc_possible_replies': None,
-            'zaap_dialog_open': False
+            'zaap_dialog_open': False,
+            'zaap_destinations': None
         }
         self.game_state = json.loads(json.dumps(self._game_state))
         self.messages_queue = []
@@ -58,7 +59,11 @@ class Listener:
         if data['message'] == 'CharacterLoadingCompleteMessage':
             self._game_state['connected'] = True
 
-        if data['message'] == 'MapComplementaryInformationsDataMessage':
+        if data['message'] in ['MapComplementaryInformationsDataMessage', 'MapComplementaryInformationsDataInHavenBagMessage']:
+            if data['message'] == 'MapComplementaryInformationsDataInHavenBagMessage':
+                self._game_state['in_haven_bag'] = True
+            else:
+                self._game_state['in_haven_bag'] = False
             self._game_state['map_id'] = int(data['content']['mapId'])
             self._game_state['pos'] = support_functions.map_id_2_coord(self.assets['map_info'], self._game_state['map_id'])
             for actor in data['content']['actors']:
@@ -98,10 +103,12 @@ class Listener:
 
         if data['message'] == 'ZaapDestinationsMessage':
             self._game_state['zaap_dialog_open'] = True
+            self._game_state['zaap_destinations'] = data['content']['destinations']
 
         if data['message'] == 'LeaveDialogMessage':
-            self._game_state['npc_dialog_open'] = False
             self._game_state['zaap_dialog_open'] = False
+            self._game_state['zaap_destinations'] = None
+            self._game_state['npc_dialog_open'] = False
             self._game_state['npc_current_question'] = None
             self._game_state['npc_possible_replies'] = None
 
