@@ -83,4 +83,5 @@ def change_map(**kwargs):
         'details': {'Execution time': execution_time}
     }
     log.close_logger(logger)
+    time.sleep(0.5)
     return strategy

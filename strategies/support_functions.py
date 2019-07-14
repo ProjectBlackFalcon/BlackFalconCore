@@ -115,7 +115,7 @@ def get_profile(bot_name):
 
 def update_profile(bot_name, new_profile):
     client = mongo_client()
-    client.blackfalcon.bots.update_one({'name': bot_name}, new_profile)
+    client.blackfalcon.bots.replace_one({'name': bot_name}, new_profile)
 
 
 def get_known_zaaps(bot_name):
@@ -138,7 +138,7 @@ def get_closest_known_zaap(bot_name, pos):
     for zaap_pos in known_zaaps:
         if dist(pos, zaap_pos) < closest[1]:
             closest = zaap_pos, dist(pos, zaap_pos)
-    return tuple(closest[0]) if closest is not None else None
+    return tuple(closest[0]) if closest[0] is not None else None
 
 
 def heuristic(node1, node2):
@@ -306,26 +306,26 @@ def get_path(map_info, graph, start_pos: tuple, end_pos: tuple, start_cell=None,
                 potential_end_nodes_ids.append(key)
 
     couples = list(itertools.product(potential_start_nodes_ids, potential_end_nodes_ids))
-    print(len(couples))
     best_path, length = None, sys.maxsize
     for couple in couples:
         path = get_path_nodes(graph, couple[0], couple[1])
-        if path and len(path) < length:
+        if path is not False and len(path) < length:
             best_path = path
             length = len(path)
-    print(time.time() - start)
     return best_path
 
 
 if __name__ == '__main__':
-    mapinfo = []
-    for i in range(5):
-        with open('../assets/map_info_{}.json'.format(i), 'r', encoding='utf8') as f:
-            mapinfo += json.load(f)
-    graph = {}
-    for i in range(2):
-        with open('../assets/pathfinder_graph_{}.json'.format(i), 'r', encoding='utf8') as f:
-            graph.update(json.load(f))
-
-    print('Starting')
-    print(get_path(mapinfo, graph, (-5, -2), (-5, -1)))
+    # mapinfo = []
+    # for i in range(8):
+    #     with open('../assets/map_info_{}.json'.format(i), 'r', encoding='utf8') as f:
+    #         mapinfo += json.load(f)
+    # graph = {}
+    # for i in range(2):
+    #     with open('../assets/pathfinder_graph_{}.json'.format(i), 'r', encoding='utf8') as f:
+    #         graph.update(json.load(f))
+    #
+    # print('Starting')
+    # print(get_path(mapinfo, graph, (1, -32), (1, -32)))
+    profile = get_profile('Mystinu')
+    print(profile)

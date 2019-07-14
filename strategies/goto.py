@@ -17,7 +17,7 @@ def goto(**kwargs):
 
     logger = log.get_logger(__file__, strategy['bot'])
 
-    report = PathMaker(
+    path_maker = PathMaker(
         strategy=strategy,
         listener=listener,
         orders_queue=orders_queue,
@@ -27,9 +27,10 @@ def goto(**kwargs):
         target_cell=target_cell,
         worldmap=target_worldmap,
     )
+    strategy['report'] = path_maker.make_path()
 
     log.close_logger(logger)
-    return report
+    return strategy
 
 
 class PathMaker:
@@ -44,6 +45,9 @@ class PathMaker:
         self.target_worldmap = worldmap
         self.harvest = harvest
         self.forbid_zaaps = forbid_zaaps
+
+    def make_path(self):
+        return self.pathmaker(self.target_coord, self.target_cell, self.target_worldmap)
 
     def getmap(self):
         current_map = self.listener.game_state['pos']
@@ -69,7 +73,8 @@ class PathMaker:
                     orders_queue=self.orders_queue,
                     strategy={
                         'bot': self.strategy['bot'],
-                    }
+                    },
+                    assets=self.assets
                 )['report']
                 if not report['success']:
                     self.logger.error('Failed to go to Astrub: {}'.format(report))
@@ -88,14 +93,14 @@ class PathMaker:
                     orders_queue=self.orders_queue,
                     strategy={
                         'bot': self.strategy['bot'],
-                    }
+                    },
+                    assets=self.assets
                 )['report']
                 if not report['success']:
                     self.logger.error('Failed to go to Incarnam: {}'.format(report))
                     return {
                         'success': False,
-                        'details': {'Execution time': time.time() - start,
-                                    'reason': 'Failed to go to Incarnam: {}'.format(report)}
+                        'details': {'Execution time': time.time() - start, 'reason': 'Failed to go to Incarnam: {}'.format(report)}
                     }
                 current_map, current_cell, current_worldmap, map_id = self.getmap()
 
@@ -106,7 +111,8 @@ class PathMaker:
                     orders_queue=self.orders_queue,
                     strategy={
                         'bot': self.strategy['bot'],
-                    }
+                    },
+                    assets=self.assets
                 )['report']
                 if not report['success']:
                     self.logger.error('Failed to exit hunting hall: {}'.format(report))
@@ -124,7 +130,8 @@ class PathMaker:
                     report = strategies.enter_havenbag.enter_havenbag(
                         listener=self.listener,
                         strategy={'bot': self.strategy['bot']},
-                        orders_queue=self.orders_queue
+                        orders_queue=self.orders_queue,
+                        assets=self.assets
                     )['report']
 
                     if report['success']:
@@ -134,7 +141,10 @@ class PathMaker:
                             assets=self.assets,
                             strategy={
                                 'bot': self.strategy['bot'],
-                                'parameters': {'target_zaap': closest_zaap}
+                                'parameters': {
+                                    'destination_x': closest_zaap[0],
+                                    'destination_y': closest_zaap[1]
+                                }
                             }
                         )['report']
                         current_map, current_cell, current_worldmap, map_id = self.getmap()
@@ -176,7 +186,8 @@ class PathMaker:
                 report = strategies.enter_havenbag.enter_havenbag(
                     listener=self.listener,
                     strategy={'bot': self.strategy['bot']},
-                    orders_queue=self.orders_queue
+                    orders_queue=self.orders_queue,
+                    assets=self.assets
                 )['report']
 
                 if report['success']:
@@ -186,7 +197,10 @@ class PathMaker:
                         assets=self.assets,
                         strategy={
                             'bot': self.strategy['bot'],
-                            'parameters': {'target_zaap': closest_zaap}
+                            'parameters': {
+                                'destination_x': closest_zaap[0],
+                                'destination_y': closest_zaap[1]
+                            }
                         }
                     )['report']
                     current_map, current_cell, current_worldmap, map_id = self.getmap()
@@ -208,7 +222,10 @@ class PathMaker:
                             assets=self.assets,
                             strategy={
                                 'bot': self.strategy['bot'],
-                                'parameters': {'target_zaap': closest_zaap}
+                                'parameters': {
+                                    'destination_x': closest_zaap[0],
+                                    'destination_y': closest_zaap[1]
+                                }
                             }
                         )['report']
                         if not report['success']:
@@ -227,7 +244,8 @@ class PathMaker:
                 success = strategies.enter_havenbag.enter_havenbag(
                     listener=self.listener,
                     strategy={'bot': self.strategy['bot']},
-                    orders_queue=self.orders_queue
+                    orders_queue=self.orders_queue,
+                    assets=self.assets
                 )['report']['success']
 
                 if success:
@@ -237,7 +255,10 @@ class PathMaker:
                         assets=self.assets,
                         strategy={
                             'bot': self.strategy['bot'],
-                            'parameters': {'target_zaap': (-26, 35)}
+                            'parameters': {
+                                'destination_x': -26,
+                                'destination_y': 35
+                            }
                         }
                     )['report']
                     if not report['success']:
@@ -333,7 +354,8 @@ class PathMaker:
                 report = strategies.enter_havenbag.enter_havenbag(
                     listener=self.listener,
                     strategy={'bot': self.strategy['bot']},
-                    orders_queue=self.orders_queue
+                    orders_queue=self.orders_queue,
+                    assets=self.assets
                 )['report']
 
                 if report['success']:
@@ -343,7 +365,10 @@ class PathMaker:
                         assets=self.assets,
                         strategy={
                             'bot': self.strategy['bot'],
-                            'parameters': {'target_zaap': (3, -5)}
+                            'parameters': {
+                                'destination_x': 3,
+                                'destination_y': -5
+                            }
                         }
                     )['report']
                     if not report['success']:
@@ -433,10 +458,11 @@ class PathMaker:
                 strategy={
                     'bot': self.strategy['bot'],
                     'command': 'move',
-                    'parameters': target_cell
+                    'parameters': {'cell': target_cell}
                 },
                 listener=self.listener,
-                orders_queue=self.orders_queue
+                orders_queue=self.orders_queue,
+                assets=self.assets
             )['report']['success']
             if success:
                 return {
@@ -451,8 +477,12 @@ class PathMaker:
                 orders_queue=self.orders_queue,
                 assets=self.assets,
                 strategy={
+                    'command': 'change_map',
                     'bot': self.strategy['bot'],
-                    'parameters': {'cell': map_change['cell'], 'direction': map_change['direction']}
+                    'parameters': {
+                        'cell': map_change['cell'],
+                        'direction': map_change['direction']
+                    }
                 }
             )['report']
             if not report['success']:
@@ -464,8 +494,8 @@ class PathMaker:
                 }
 
             current_map, current_cell, current_worldmap, map_id = self.getmap()
-            if current_worldmap == 1:
-                strategies.support_functions.add_known_zaap(self.strategy['bot'], (map_change.split(';')[0], map_change.split(';')[1]))
+            if current_worldmap == 1 and current_map in self.assets['zaapList']:
+                strategies.support_functions.add_known_zaap(self.strategy['bot'], tuple(current_map))
 
             # TODO: Add harvest here
         #
@@ -473,14 +503,15 @@ class PathMaker:
         #     self.goto(target_coord, target_cell, worldmap)
 
         if target_cell is not None:
-            report = strategies.move(
+            report = strategies.move.move(
                 strategy={
                     'bot': self.strategy['bot'],
                     'command': 'move',
-                    'parameters': target_cell
+                    'parameters': {'cell': target_cell}
                 },
                 listener=self.listener,
-                orders_queue=self.orders_queue
+                orders_queue=self.orders_queue,
+                assets=self.assets
             )['report']
             if not report['success']:
                 self.logger.error('Issue during final move: {}'.format(report))
