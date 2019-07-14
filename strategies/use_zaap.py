@@ -23,41 +23,39 @@ def use_zaap(**kwargs):
     logger = log.get_logger(__name__, strategy['bot'])
     start, global_start = time.time(), time.time()
 
-    # TODO: Check that the map has a zaap
-
     # Move the bot the appropriate cell to activate the zaap
     zaap_cell, element_id, skill_uid = None, None, None
     current_cell = listener.game_state['cell']
     current_map = listener.game_state['pos']
     for element in listener.game_state['map_elements']:
         if 'enabledSkills' in element.keys():
-            if 'skillId' in element['enabledSkills'].keys() and element['enabledSkills']['skillId'] == 114:
-                element_id = element['elementId']
-                zaap_cell = assets['elements_info'][str(listener.game_state['map_id'])][element_id]
-                skill_uid = element['enabledSkills']['skillInstanceUid']
+            for skill in element['enabledSkills']:
+                if 'skillId' in skill.keys() and skill['skillId'] == 114:
+                    element_id = element['elementId']
+                    zaap_cell = assets['elements_info'][str(listener.game_state['map_id'])][str(element_id)]['cell']
+                    skill_uid = skill['skillInstanceUid']
 
-    if zaap_cell is None and element_id is not None and skill_uid is not None:
+    if zaap_cell is None or element_id is None or skill_uid is None:
         strategy['report'] = {
             'success': False,
             'details': {'Execution time': time.time() - start, 'Reason': 'Could not find a Zaap at {}, map id : {}'.format(current_map, listener.game_state['map_id'])}
         }
+        return strategy
 
-    zaap_use_cell = strategies.support_functions.get_closest_walkable_neighbour_cell(assets['map_info'], zaap_cell, current_cell, current_map, current_cell)
-    report = strategies.move.move(
-        listener=listener,
-        strategy={'bot': strategy['bot'], 'parameters': {'cell': zaap_use_cell}},
-        orders_queue=orders_queue
-    )
-    if not report['success']:
-        strategy['report'] = {
-            'success': False,
-            'details': {'Execution time': time.time() - start, 'Reason': 'Move to get to zaap failed'}
-        }
-
-    # TODO: Activate the zaap
-    # TODO: Check that the bot has sufficient funds
-    # TODO: Check that the bot knows the destination's zaap
-    # TODO: Use it to go to destination
+    if not listener.game_state['in_haven_bag']:
+        zaap_use_cell = strategies.support_functions.get_closest_walkable_neighbour_cell(assets['map_info'], zaap_cell, current_cell, current_map, listener.game_state['worldmap'])
+        sub_strategy = strategies.move.move(
+            listener=listener,
+            strategy={'bot': strategy['bot'], 'parameters': {'cell': zaap_use_cell}},
+            orders_queue=orders_queue,
+            assets=assets
+        )
+        if not sub_strategy['report']['success']:
+            strategy['report'] = {
+                'success': False,
+                'details': {'Execution time': time.time() - start, 'Reason': 'Move to get to zaap failed'}
+            }
+            return strategy
 
     order = {
         'command': 'use_interactive',
@@ -88,23 +86,41 @@ def use_zaap(**kwargs):
 
     logger.info('Opened zaap menu in {}s'.format(execution_time))
 
-    # TODO: Check if the bot has enough money for the travel
-    # TODO: Check if the target zaap is in the list of zaaps it can get to
-    # TODO: Select a zaap from the list of possible destinations
-    selected_zaap = None
-    bot_strategy = {
+    target_map_id = int(strategies.support_functions.fetch_map(assets['map_info'], coord='{};{}'.format(strategy['parameters']['destination_x'], strategy['parameters']['destination_y']), worldmap=1)['id'])
+    selected_destination = None
+    for destination in listener.game_state['zaap_destinations']:
+        if destination['mapId'] == target_map_id:
+            selected_destination = destination
+
+    if selected_destination is None:
+        logger.warn('Zaap at destination [{},{}] is not known'.format(strategy['parameters']['destination_x'], strategy['parameters']['destination_y']))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': execution_time, 'Reason': 'Zaap at destination [{},{}] is not known'.format(strategy['parameters']['destination_x'], strategy['parameters']['destination_y'])}
+        }
+        return strategy
+
+    if selected_destination['cost'] > listener.game_state['kamas']:
+        logger.warn('Not enough money to use zaap: needed {}, available: {}'.format(selected_destination['cost'], listener.game_state['kamas']))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': execution_time, 'Reason': 'Not enough money to use zaap: needed {}, available: {}'.format(selected_destination['cost'], listener.game_state['kamas'])}
+        }
+        return strategy
+
+    order = {
         'command': 'travel_by_zaap',
         'parameters': {
-            'target_map_id': selected_zaap
+            'target_map_id': selected_destination['mapId']
         }
     }
-    logger.info('Sending order to bot API: {}'.format(json.dumps(bot_strategy)))
-    orders_queue.put((json.dumps(bot_strategy),))
+    logger.info('Sending order to bot API: {}'.format(json.dumps(order)))
+    orders_queue.put((json.dumps(order),))
 
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'pos' in listener.game_state.keys() and 'worldmap' in listener.game_state.keys():
-            if listener.game_state['pos'] == strategy['parameters']['target_zaap'] and listener.game_state['worldmap'] == 1:
+            if listener.game_state['map_id'] == selected_destination['mapId']:
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
@@ -113,7 +129,7 @@ def use_zaap(**kwargs):
         logger.warn('Failed to use zaap in {}s'.format(execution_time))
         strategy['report'] = {
             'success': False,
-            'details': {'Execution time': execution_time, 'Reason': 'Timeout when using zaap'}
+            'details': {'Execution time': execution_time, 'Reason': 'Teleport by zaap failed'}
         }
         return strategy
 
