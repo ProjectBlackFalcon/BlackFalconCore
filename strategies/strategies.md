@@ -189,3 +189,19 @@ For the orders exchanged between the commander and the low level API, see the or
   "command": "close_bank"
 }
 ````
+
+### Enter bank
+````json
+{
+  "bot": "Mystinu",
+  "command": "enter_bank"
+}
+````
+
+### Exit bank
+````json
+{
+  "bot": "Mystinu",
+  "command": "exit_bank"
+}
+````
