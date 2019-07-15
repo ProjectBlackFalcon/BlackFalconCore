@@ -25,7 +25,8 @@ class Listener:
             'npc_current_question': None,
             'npc_possible_replies': None,
             'zaap_dialog_open': False,
-            'zaap_destinations': None
+            'zaap_destinations': None,
+            'in_fight': False
         }
         self.game_state = json.loads(json.dumps(self._game_state))
         self.messages_queue = []
@@ -34,7 +35,7 @@ class Listener:
         self.logger.info('Starting listening for game state changes')
         while 1:
             data = json.loads(self.output_queue.get()[0])
-            self.logger.info('Listener received {}'.format(data))
+            # self.logger.info('Listener received {}'.format(data))
             self.messages_queue.append((time.time(), data))
             self.messages_queue = self.messages_queue[1:] if len(self.messages_queue) > 100 else self.messages_queue
             self.update_game_state(data)
@@ -44,6 +45,9 @@ class Listener:
         if data['message'] == 'InventoryContentMessage':
             self._game_state['kamas'] = data['content']['kamas']
             self._game_state['inventory'] = data['content']['objects']  # TODO: formatting
+
+        # if data['message'] == 'KamasUpdateMessage':
+        #     self._game_state['kamas'] = data['content']['kamas']
 
         if data['message'] == 'CharacterSelectedSuccessMessage':
             self._game_state['level'] = data['content']['infos']['level']
@@ -111,6 +115,12 @@ class Listener:
             self._game_state['npc_dialog_open'] = False
             self._game_state['npc_current_question'] = None
             self._game_state['npc_possible_replies'] = None
+
+        if data['message'] == 'GameFightStartingMessage':
+            self._game_state['in_fight'] = True
+
+        if data['message'] == 'ChallengeResultMessage':
+            self._game_state['in_fight'] = False
 
     def received_message(self, start_time, message_id):
         for message in self.messages_queue:
