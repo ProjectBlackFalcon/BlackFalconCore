@@ -123,9 +123,9 @@ def get_known_zaaps(bot_name):
     return client.blackfalcon.bots.find_one({'name': bot_name})['known_zaaps']
 
 
-def add_known_zaap(bot_name, pos: tuple):
-    if type(pos) is not tuple:
-        raise TypeError('Positions must be tuples')
+def add_known_zaap(bot_name, pos: list):
+    if type(pos) is not list:
+        raise TypeError('Positions must be lists')
     profile = get_profile(bot_name)
     if pos not in profile['known_zaaps']:
         profile['known_zaaps'].append(pos)
@@ -326,6 +326,5 @@ if __name__ == '__main__':
     #         graph.update(json.load(f))
     #
     # print('Starting')
-    # print(get_path(mapinfo, graph, (1, -32), (1, -32)))
-    profile = get_profile('Mystinu')
-    print(profile)
+    # print(get_path(mapinfo, graph, (4, -18), (3, -5)))
+    print(get_known_zaaps('Mystinu'))

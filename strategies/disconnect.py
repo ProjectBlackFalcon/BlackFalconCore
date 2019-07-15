@@ -28,7 +28,7 @@ def disconnect(**kwargs):
             return strategy
 
     order = {
-        'command': strategy['command'],
+        'command': 'disconnect',
         'parameters': {
             'name': strategy['bot']
         }

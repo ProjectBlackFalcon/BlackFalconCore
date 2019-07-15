@@ -240,7 +240,7 @@ class PathMaker:
         if list(current_map) not in self.assets['BrakMaps'] and list(target_coord) in self.assets['BrakMaps']:
             # Bot needs to enter brak
             disc_zaaps = strategies.support_functions.get_known_zaaps(self.strategy['bot'])
-            if (-26, 35) in disc_zaaps:
+            if [-26, 35] in disc_zaaps:
                 success = strategies.enter_havenbag.enter_havenbag(
                     listener=self.listener,
                     strategy={'bot': self.strategy['bot']},
@@ -269,8 +269,6 @@ class PathMaker:
                                         'reason': 'Unable to use Zaap to go to {}'.format((-26, 35))}
                         }
                 current_map, current_cell, current_worldmap, map_id = self.getmap()
-            else:
-                self.pathmaker((-26, 35), forbid_zaaps=True)
 
         if list(current_map) in self.assets['BrakMaps'] and list(target_coord) not in self.assets['BrakMaps']:
             # Bot needs to exit brak
@@ -349,8 +347,8 @@ class PathMaker:
 
         if list(current_map) not in self.assets['CastleAmakna'] and list(target_coord) in self.assets['CastleAmakna']:
             # Bot needs to enter the castle
-            disc_zaaps = strategies.support_functions.get_discovered_zaaps(self.strategy['bot'])
-            if (3, -5) in disc_zaaps:
+            disc_zaaps = strategies.support_functions.get_known_zaaps(self.strategy['bot'])
+            if [3, -5] in disc_zaaps:
                 report = strategies.enter_havenbag.enter_havenbag(
                     listener=self.listener,
                     strategy={'bot': self.strategy['bot']},
@@ -387,8 +385,8 @@ class PathMaker:
                                     'reason': 'Failed to enter havenbag: {}'.format(report)}
                     }
                 current_map, current_cell, current_worldmap, map_id = self.getmap()
-            else:
-                self.pathmaker((3, -5), forbid_zaaps=True)
+            # else:
+            #     self.pathmaker((3, -5), forbid_zaaps=True)
         if list(current_map) in self.assets['CastleAmakna'] and list(target_coord) not in self.assets['CastleAmakna']:
             # Bot needs to exit the castle through the northern gate
             if target_coord[1] <= current_map[1]:
@@ -399,6 +397,7 @@ class PathMaker:
                     assets=self.assets,
                     strategy={
                         'bot': self.strategy['bot'],
+                        'command': 'change_map',
                         'parameters': {'cell': 140, 'direction': 'w'}
                     }
                 )['report']
@@ -414,11 +413,14 @@ class PathMaker:
         if list(current_map) not in self.assets['BworkMaps'] and list(target_coord) in self.assets['BworkMaps']:
             # Bot needs to enter bwork village
             self.pathmaker((-1, 8), target_cell=383)
-            report = strategies.enter_bwork(
+            report = strategies.enter_bwork.enter_bwork(
                 listener=self.listener,
                 orders_queue=self.orders_queue,
                 assets=self.assets,
-                strategy={'bot': self.strategy['bot']}
+                strategy={
+                    'bot': self.strategy['bot'],
+                    'command': 'enter_bwork'
+                }
             )['report']
             if not report['success']:
                 self.logger.error('Failed to enter bwork: {}'.format(report))
@@ -436,7 +438,10 @@ class PathMaker:
                 listener=self.listener,
                 orders_queue=self.orders_queue,
                 assets=self.assets,
-                strategy={'bot': self.strategy['bot']}
+                strategy={
+                    'bot': self.strategy['bot'],
+                    'command': 'exit_bwork'
+                }
             )['report']
             if not report['success']:
                 self.logger.error('Failed to exit bwork: {}'.format(report))
@@ -495,7 +500,7 @@ class PathMaker:
 
             current_map, current_cell, current_worldmap, map_id = self.getmap()
             if current_worldmap == 1 and current_map in self.assets['zaapList']:
-                strategies.support_functions.add_known_zaap(self.strategy['bot'], tuple(current_map))
+                strategies.support_functions.add_known_zaap(self.strategy['bot'], current_map)
 
             # TODO: Add harvest here
         #

@@ -20,13 +20,32 @@ def enter_bwork(**kwargs):
     logger = log.get_logger(__name__, strategy['bot'])
 
     global_start, start = time.time(), time.time()
-    report = strategies.move(
+
+    # Get the IDs for activating the door
+    element_id, skill_uid = None, None
+    current_map = listener.game_state['pos']
+    for element in listener.game_state['map_elements']:
+        if 'enabledSkills' in element.keys():
+            for skill in element['enabledSkills']:
+                if 'skillId' in skill.keys() and skill['skillId'] == 184:
+                    element_id = element['elementId']
+                    skill_uid = skill['skillInstanceUid']
+
+    if element_id is None or skill_uid is None:
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': time.time() - start, 'Reason': 'Could not find a bwork door at {}, map id : {}'.format(current_map, listener.game_state['map_id'])}
+        }
+        return strategy
+
+    report = strategies.move.move(
         strategy={
             'bot': strategy['bot'],
             'command': 'move',
-            'parameters': 383
+            'parameters': {'cell': 383}
         },
         listener=listener,
+        assets=assets,
         orders_queue=orders_queue
     )['report']
 
@@ -38,9 +57,6 @@ def enter_bwork(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    door_skill_id = 184  # TODO: ask Batou what id is actually used (this is the skill id, might need something else)
-    element_id = 00000  # TODO Get from gamestate
-    skill_uid = 00000  # TODO Get from gamestate
     order = {
         'command': 'use_interactive',
         'parameters': {

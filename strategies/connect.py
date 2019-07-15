@@ -31,7 +31,7 @@ def connect(**kwargs):
 
     bot_profile = strategies.support_functions.get_profile(strategy['bot'])
     order = {
-        'command': strategy['command'],
+        'command': 'connect',
         'parameters': {
             'name': bot_profile['name'],
             'username': bot_profile['username'],

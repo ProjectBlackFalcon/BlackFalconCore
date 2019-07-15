@@ -49,7 +49,7 @@ def change_map(**kwargs):
     map_data = strategies.support_functions.fetch_map(assets['map_info'], current_pos, listener.game_state['worldmap'])
     target_map_id = map_data['neighbours'][direction]
     order = {
-        'command': strategy['command'],
+        'command': 'change_map',
         'parameters': {
             'direction': strategy['parameters']['direction'],
             'target_map_id': target_map_id
