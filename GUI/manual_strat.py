@@ -183,25 +183,6 @@ def get_pos_info():
     if map_data is not None:
         map = cells_2_map(map_data['cells'])
 
-        # output = []
-        # cell_id = 0
-        # for cell_pack_id in range(len(map_data['rawCells']) // 14):
-        #     cells_pack = []
-        #     for cell in map_data['rawCells'][14 * cell_pack_id: 14 * (cell_pack_id + 1)]:
-        #         cell_data = ast.literal_eval(map_info['map_info_index'][cell])
-        #         if cell_data[0]:
-        #             cells_pack.append(1)
-        #         else:
-        #             cells_pack.append(0)
-        #         cell_id += 1
-        #     output.append(cells_pack)
-        #
-        # map = cells_2_map(output)
-        #
-        # print('#############################')
-        # for line in map_data['cells']:
-        #     print([0 if cell in [1, 2] else 1 for cell in line])
-
         for y in range(len(map)):
             for x in range(len(map[y])):
                 if map[y, x] == 0:
