@@ -26,7 +26,8 @@ class Listener:
             'npc_possible_replies': None,
             'zaap_dialog_open': False,
             'zaap_destinations': None,
-            'in_fight': False
+            'in_fight': False,
+            'storage_open': False
         }
         self.game_state = json.loads(json.dumps(self._game_state))
         self.messages_queue = []
@@ -46,8 +47,8 @@ class Listener:
             self._game_state['kamas'] = data['content']['kamas']
             self._game_state['inventory'] = data['content']['objects']  # TODO: formatting
 
-        # if data['message'] == 'KamasUpdateMessage':
-        #     self._game_state['kamas'] = data['content']['kamas']
+        if data['message'] == 'KamasUpdateMessage':
+            self._game_state['kamas'] = data['content']['kamasTotal']
 
         if data['message'] == 'CharacterSelectedSuccessMessage':
             self._game_state['level'] = data['content']['infos']['level']
@@ -121,6 +122,14 @@ class Listener:
 
         if data['message'] == 'ChallengeResultMessage':
             self._game_state['in_fight'] = False
+
+        if data['message'] == 'StorageInventoryContentMessage':
+            self._game_state['storage_open'] = True
+            self._game_state['storage_content'] = data['content']
+
+        if data['message'] == 'ExchangeLeaveMessage':
+            self._game_state['storage_open'] = False
+            self._game_state['storage_content'] = {}
 
     def received_message(self, start_time, message_id):
         for message in self.messages_queue:
