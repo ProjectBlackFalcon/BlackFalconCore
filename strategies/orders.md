@@ -120,3 +120,57 @@ TODO: fix parameters
   }
 }
 ````
+
+### Single item to storage
+````json
+{
+  "command": "inv_to_storage",
+  "parameters": {
+    "item_uid": 22850903,
+    "quantity": 5
+  }
+}
+````
+
+### Single item from storage
+````json
+{
+  "command": "storage_to_inv",
+  "parameters": {
+    "item_uid": 22850903,
+    "quantity": 5
+  }
+}
+````
+
+### List of items to storage
+````json
+{
+  "command": "inv_to_storage_list",
+  "parameters": {
+    "items_uids": [22850903, 22850904]
+  }
+}
+````
+
+### List of items from storage
+````json
+{
+  "command": "storage_to_inv_list",
+  "parameters": {
+    "items_uids": [22850903, 22850904]
+  }
+}
+````
+
+### Move kamas
+````json
+{
+  "command": "move_kamas",
+  "parameters": {
+    "quantity": 100000
+  }
+}
+````
+- Positive values means from inventory to storage
+- Negative values means from storage to inventory
