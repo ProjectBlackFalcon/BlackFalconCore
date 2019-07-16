@@ -67,7 +67,14 @@ class PathMaker:
 
             # Incarnam to Astrub
             if current_worldmap == 2 and worldmap == 1:
-                self.pathmaker((4, -3), worldmap=2)
+                report = self.pathmaker((4, -3), worldmap=2)
+                if not report['success']:
+                    self.logger.error('Failed to go to the portal map (Incarnam): {}'.format(report))
+                    return {
+                        'success': False,
+                        'details': {'Execution time': time.time() - start, 'reason': 'Failed to go to the portal map (Incarnam): {}'.format(report)}
+                    }
+
                 report = strategies.go_to_astrub.go_to_astrub(
                     listener=self.listener,
                     orders_queue=self.orders_queue,
@@ -87,7 +94,13 @@ class PathMaker:
             # Astrub to Incarnam
             elif current_worldmap == 1 and worldmap == 2:
                 gate_map = (6, -19)
-                self.pathmaker(gate_map, target_cell=397)
+                report = self.pathmaker(gate_map, target_cell=397)
+                if not report['success']:
+                    self.logger.error('Failed to go to the portal map (Astrub): {}'.format(report))
+                    return {
+                        'success': False,
+                        'details': {'Execution time': time.time() - start, 'reason': 'Failed to go to the portal map (Astrub): {}'.format(report)}
+                    }
                 report = strategies.go_to_incarnam.go_to_incarnam(
                     listener=self.listener,
                     orders_queue=self.orders_queue,
@@ -214,7 +227,14 @@ class PathMaker:
                 else:
                     # If unable to enter havenbag, than just walk to the closest zaap and use this one
                     closest_zaap_2 = strategies.support_functions.get_closest_known_zaap(self.strategy['bot'], current_map)
-                    self.pathmaker(closest_zaap_2, forbid_zaaps=True)
+                    report = self.pathmaker(closest_zaap_2, forbid_zaaps=True)
+                    if not report['success']:
+                        self.logger.error('Failed to go to the closest zaap at {}: {}'.format(closest_zaap_2, report))
+                        return {
+                            'success': False,
+                            'details': {'Execution time': time.time() - start,
+                                        'reason': 'Failed to go to the closest zaap at {}: {}'.format(closest_zaap_2, report)}
+                        }
                     if closest_zaap != closest_zaap_2:
                         report = strategies.use_zaap.use_zaap(
                             listener=self.listener,
@@ -273,7 +293,13 @@ class PathMaker:
         if list(current_map) in self.assets['BrakMaps'] and list(target_coord) not in self.assets['BrakMaps']:
             # Bot needs to exit brak
             if list(target_coord) in self.assets['BrakMaps']:
-                self.pathmaker((-20, 34))
+                report = self.pathmaker((-20, 34))
+                if not report['success']:
+                    self.logger.error('Failed to go to the brak east gate: {}'.format(report))
+                    return {
+                        'success': False,
+                        'details': {'Execution time': time.time() - start, 'reason': 'Failed to go to the brak east gate: {}'.format(report)}
+                    }
                 report = strategies.change_map.change_map(
                     listener=self.listener,
                     orders_queue=self.orders_queue,
@@ -291,7 +317,13 @@ class PathMaker:
                                     'reason': 'Failed to exit brak: {}'.format(report)}
                     }
             elif list(target_coord) in self.assets['BrakNorth']:
-                self.pathmaker((-26, 31))
+                report = self.pathmaker((-26, 31))
+                if not report['success']:
+                    self.logger.error('Failed to go to the brak north gate: {}'.format(report))
+                    return {
+                        'success': False,
+                        'details': {'Execution time': time.time() - start, 'reason': 'Failed to go to the brak north gate: {}'.format(report)}
+                    }
                 report = strategies.exit_brak_north.exit_brak_north(
                     listener=self.listener,
                     orders_queue=self.orders_queue,
@@ -309,7 +341,15 @@ class PathMaker:
 
         if list(current_map) in self.assets['WestDDTerr'] and list(target_coord) in self.assets['DDTerr']:
             # Bot needs to enter dd territory from west
-            self.pathmaker((-23, -1), target_cell=387)
+            report = self.pathmaker((-23, -1), target_cell=387)
+            if not report['success']:
+                self.logger.error('Failed to go to the stairs to enter the dd territory: {}'.format(report))
+                return {
+                    'success': False,
+                    'details': {'Execution time': time.time() - start,
+                                'reason': 'Failed to go to the stairs to enter the dd territory: {}'.format(report)}
+                }
+
             report = strategies.enter_dd_territory.enter_dd_territory(
                 listener=self.listener,
                 orders_queue=self.orders_queue,
@@ -326,7 +366,14 @@ class PathMaker:
             current_map, current_cell, current_worldmap, map_id = self.getmap()
         if list(current_map) in self.assets['DDTerr'] and list(target_coord) in self.assets['WestDDTerr']:
             # Bot needs to exit dd territory to the west
-            self.pathmaker((-22, -1))
+            report = self.pathmaker((-22, -1))
+            if not report['success']:
+                self.logger.error('Failed to go to the map to exit the west dd terr: {}'.format(report))
+                return {
+                    'success': False,
+                    'details': {'Execution time': time.time() - start,
+                                'reason': 'Failed to go to the map to exit the west dd terr: {}'.format(report)}
+                }
             report = strategies.change_map.change_map(
                 listener=self.listener,
                 orders_queue=self.orders_queue,
@@ -385,12 +432,17 @@ class PathMaker:
                                     'reason': 'Failed to enter havenbag: {}'.format(report)}
                     }
                 current_map, current_cell, current_worldmap, map_id = self.getmap()
-            # else:
-            #     self.pathmaker((3, -5), forbid_zaaps=True)
+
         if list(current_map) in self.assets['CastleAmakna'] and list(target_coord) not in self.assets['CastleAmakna']:
             # Bot needs to exit the castle through the northern gate
             if target_coord[1] <= current_map[1]:
-                self.pathmaker((4, -8))
+                report = self.pathmaker((4, -8))
+                if not report['success']:
+                    self.logger.error('Failed to go to the castle\'s northern gate: {}'.format(report))
+                    return {
+                        'success': False,
+                        'details': {'Execution time': time.time() - start, 'reason': 'Failed to go to the castle\'s northern gate: {}'.format(report)}
+                    }
                 report = strategies.change_map.change_map(
                     listener=self.listener,
                     orders_queue=self.orders_queue,
@@ -412,7 +464,14 @@ class PathMaker:
 
         if list(current_map) not in self.assets['BworkMaps'] and list(target_coord) in self.assets['BworkMaps']:
             # Bot needs to enter bwork village
-            self.pathmaker((-1, 8), target_cell=383)
+            report = self.pathmaker((-1, 8), target_cell=383)
+            if not report['success']:
+                self.logger.error('Failed to go to the bwork gate (outside): {}'.format(report))
+                return {
+                    'success': False,
+                    'details': {'Execution time': time.time() - start,
+                                'reason': 'Failed to go to the bwork gate (outside): {}'.format(report)}
+                }
             report = strategies.enter_bwork.enter_bwork(
                 listener=self.listener,
                 orders_queue=self.orders_queue,
@@ -433,7 +492,14 @@ class PathMaker:
             current_map, current_cell, current_worldmap, map_id = self.getmap()
         if list(current_map) in self.assets['BworkMaps'] and list(target_coord) not in self.assets['BworkMaps']:
             # Bot needs to exit bwork village
-            self.pathmaker((-2, 8), target_cell=260)
+            report = self.pathmaker((-2, 8), target_cell=260)
+            if not report['success']:
+                self.logger.error('Failed to go to the bwork gate (inside): {}'.format(report))
+                return {
+                    'success': False,
+                    'details': {'Execution time': time.time() - start,
+                                'reason': 'Failed to go to the bwork gate (inside): {}'.format(report)}
+                }
             report = strategies.exit_bwork.exit_bwork(
                 listener=self.listener,
                 orders_queue=self.orders_queue,
@@ -459,7 +525,7 @@ class PathMaker:
             }
 
         if current_map == target_coord and worldmap == current_worldmap and target_cell is not None:
-            success = strategies.move.move(
+            report = strategies.move.move(
                 strategy={
                     'bot': self.strategy['bot'],
                     'command': 'move',
@@ -468,11 +534,17 @@ class PathMaker:
                 listener=self.listener,
                 orders_queue=self.orders_queue,
                 assets=self.assets
-            )['report']['success']
-            if success:
+            )['report']
+            if report['success']:
                 return {
                     'success': True,
                     'details': {'Execution time': time.time() - start}
+                }
+            else:
+                return {
+                    'success': False,
+                    'details': {'Execution time': time.time() - start,
+                                'reason': 'Failed to move: {}'.format(report)}
                 }
 
         path = strategies.support_functions.get_path(self.assets['map_info'], self.assets['pathfinder_graph'], current_map, target_coord, current_cell, target_cell, worldmap)
