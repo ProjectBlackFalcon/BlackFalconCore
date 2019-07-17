@@ -86,6 +86,8 @@
             "disabledSkills":[],
             "onCurrentMap": true
         }
-    ]
+    ],
+    "storage_open": false,
+    "storage_content": []
 }
 ````
