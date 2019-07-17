@@ -27,7 +27,7 @@ class Listener:
             'zaap_dialog_open': False,
             'zaap_destinations': None,
             'in_fight': False,
-            'storage_open': False
+            'storage_open': False,
         }
         self.game_state = json.loads(json.dumps(self._game_state))
         self.messages_queue = []
@@ -43,6 +43,18 @@ class Listener:
             self.game_state = json.loads(json.dumps(self._game_state))
 
     def update_game_state(self, data):
+        if data['message'] == 'JobExperienceMultiUpdateMessage':
+            jobs_dict = {str(job['jobId']): job for job in data['content']['experiencesUpdate']}
+            self._game_state['jobs'] = jobs_dict
+
+        if data['message'] == 'JobDescriptionMessage':
+            for desc in data['content']['jobsDescription']:
+                self._game_state['jobs'][str(desc['jobId'])]['skills'] = desc['skills']
+
+        if data['message'] == 'JobExperienceUpdateMessage':
+            # TODO
+            pass
+
         if data['message'] == 'InventoryContentMessage':
             self._game_state['kamas'] = data['content']['kamas']
             self._game_state['inventory'] = data['content']['objects']  # TODO: formatting

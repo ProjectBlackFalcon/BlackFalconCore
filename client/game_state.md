@@ -88,6 +88,23 @@
         }
     ],
     "storage_open": false,
-    "storage_content": []
+    "storage_content": [],
+    "jobs": {  
+        "26": {
+            "jobId": 26,
+            "jobLevel":1,
+            "jobXP":10,
+            "jobXpLevelFloor":0,
+            "jobXpNextLevelFloor":20,
+            "skills": [
+                {  
+                  "skillId":300,
+                  "time":30,
+                  "min":1,
+                  "max":1
+               }
+            ]
+        }
+    }
 }
 ````
