@@ -73,6 +73,22 @@ def get_closest_walkable_neighbour_cell(map_info, target_cell, player_cell, map_
     return False
 
 
+def get_closest_reachable_cell(map_info, target_cell, player_cell, map_coords, worldmap):
+    map = coord_fetch_map(map_info, '{};{}'.format(map_coords[0], map_coords[1]), worldmap)
+    cells = map['cells']
+    cells_vector = [item for sublist in cells for item in sublist]
+
+    reachable_cells = []
+    for cell, cell_type in enumerate(cells_vector):
+        if cell_type not in [-1, 1, 2] and can_walk_to_node(cells_2_map(cells), player_cell, {'cell': cell}):
+            reachable_cells.append(cell)
+
+    closest, distance = cells[0], distance_cell(cells[0], target_cell)
+    for cell in cells:
+        if distance_cell(cell, target_cell) < distance:
+            closest, distance = cell, distance_cell(cell, target_cell)
+    return closest
+
 def mongo_client():
     return pymongo.MongoClient(
         host=credentials['mongo']['host'],
