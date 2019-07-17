@@ -87,6 +87,14 @@
             "onCurrentMap": true
         }
     ],
+    "stated_elements": [
+        { 
+            "elementId":489497,
+            "elementCellId":172,
+            "elementState":1,
+            "onCurrentMap":true
+        }
+    ],
     "storage_open": false,
     "storage_content": [],
     "jobs": {  
@@ -102,7 +110,7 @@
                   "time":30,
                   "min":1,
                   "max":1
-               }
+                }
             ]
         }
     }

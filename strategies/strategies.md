@@ -205,3 +205,14 @@ For the orders exchanged between the commander and the low level API, see the or
   "command": "exit_bank"
 }
 ````
+
+### harvest
+````json
+{
+  "bot": "Mystinu",
+  "command": "harvest",
+  "parameters": {
+      "cell": 199
+  }
+}
+````

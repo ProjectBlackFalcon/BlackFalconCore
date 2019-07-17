@@ -43,6 +43,8 @@ class Listener:
             self.game_state = json.loads(json.dumps(self._game_state))
 
     def update_game_state(self, data):
+        # TODO: get and maintain stated elements
+
         if data['message'] == 'JobExperienceMultiUpdateMessage':
             jobs_dict = {str(job['jobId']): job for job in data['content']['experiencesUpdate']}
             self._game_state['jobs'] = jobs_dict
@@ -92,6 +94,7 @@ class Listener:
             self._game_state['map_npc'] = []
             self._game_state['map_players'] = []
             self._game_state['map_elements'] = []
+            self._game_state['stated_elements'] = []
             for actor in data['content']['actors']:
                 if actor['contextualId'] < 0:
                     if 'npcId' in actor.keys():
@@ -104,6 +107,22 @@ class Listener:
                 for element in data['content']['interactiveElements']:
                     if element['onCurrentMap']:
                         self._game_state['map_elements'].append(element)
+            if 'statedElements' in data['content'].keys():
+                for element in data['content']['statedElements']:
+                    if element['onCurrentMap']:
+                        self._game_state['stated_elements'].append(element)
+
+        if data['message'] == 'StatedElementUpdatedMessage':
+            for element in self._game_state['stated_elements']:
+                if element['elementId'] == data['content']['statedElement']['elementId']:
+                    element['elementId'] = data['content']['statedElement']
+                    break
+
+        if data['message'] == 'InteractiveElementUpdatedMessage':
+            for element in self._game_state['map_elements']:
+                if element['elementId'] == data['content']['interactiveElement']['elementId']:
+                    element['elementId'] = data['content']['interactiveElement']
+                    break
 
         if data['message'] == 'GameMapMovementMessage':
             if data['content']['actorId'] == self._game_state['actor_id']:
