@@ -294,12 +294,12 @@ def get_path(map_info, graph, start_pos: tuple, end_pos: tuple, start_cell=None,
     start_cell_set = False if start_cell is None else True
     end_cell_set = False if end_cell is None else True
     for key, node in graph.items():
-        if node['coord'] == '{};{}'.format(start_pos[0], start_pos[1]):
+        if node['coord'] == '{};{}'.format(start_pos[0], start_pos[1]) and node['worldmap'] == worldmap:
             tmp_start_cell = node['cell'] if start_cell_set is False else start_cell
             cells = fetch_map(map_info, node['coord'], worldmap)['cells']
             if can_walk_to_node(cells_2_map(cells), tmp_start_cell, node):
                 potential_start_nodes_ids.append(key)
-        if node['coord'] == '{};{}'.format(end_pos[0], end_pos[1]):
+        if node['coord'] == '{};{}'.format(end_pos[0], end_pos[1]) and node['worldmap'] == worldmap:
             tmp_end_cell = node['cell'] if end_cell_set is False else end_cell
             cells = fetch_map(map_info, node['coord'], worldmap)['cells']
             if can_walk_to_node(cells_2_map(cells), tmp_end_cell, node):
