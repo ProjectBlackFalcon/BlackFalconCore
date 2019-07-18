@@ -193,7 +193,7 @@ class PathMaker:
                 }
 
         closest_zaap = strategies.support_functions.get_closest_known_zaap(self.strategy['bot'], target_coord)
-        if closest_zaap is not None and not forbid_zaaps:
+        if closest_zaap is not None and not forbid_zaaps and self.listener.game_state['worldmap'] == 1:
             distance_zaap_target = self.distance(closest_zaap, target_coord)
             if worldmap == current_worldmap and self.distance(current_map, target_coord) > distance_zaap_target + 5:
                 report = strategies.enter_havenbag.enter_havenbag(
@@ -260,7 +260,7 @@ class PathMaker:
         if list(current_map) not in self.assets['BrakMaps'] and list(target_coord) in self.assets['BrakMaps']:
             # Bot needs to enter brak
             disc_zaaps = strategies.support_functions.get_known_zaaps(self.strategy['bot'])
-            if [-26, 35] in disc_zaaps:
+            if [-26, 35] in disc_zaaps and self.listener.game_state['worldmap'] == 1:
                 success = strategies.enter_havenbag.enter_havenbag(
                     listener=self.listener,
                     strategy={'bot': self.strategy['bot']},
@@ -395,7 +395,7 @@ class PathMaker:
         if list(current_map) not in self.assets['CastleAmakna'] and list(target_coord) in self.assets['CastleAmakna']:
             # Bot needs to enter the castle
             disc_zaaps = strategies.support_functions.get_known_zaaps(self.strategy['bot'])
-            if [3, -5] in disc_zaaps:
+            if [3, -5] in disc_zaaps and self.listener.game_state['worldmap'] == 1:
                 report = strategies.enter_havenbag.enter_havenbag(
                     listener=self.listener,
                     strategy={'bot': self.strategy['bot']},
