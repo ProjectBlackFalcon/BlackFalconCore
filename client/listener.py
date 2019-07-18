@@ -28,6 +28,9 @@ class Listener:
             'zaap_destinations': None,
             'in_fight': False,
             'storage_open': False,
+            'jobs': {},
+            'harvest_done': False,
+            'harvest_started': False
         }
         self.game_state = json.loads(json.dumps(self._game_state))
         self.messages_queue = []
@@ -47,11 +50,18 @@ class Listener:
 
         if data['message'] == 'JobExperienceMultiUpdateMessage':
             jobs_dict = {str(job['jobId']): job for job in data['content']['experiencesUpdate']}
-            self._game_state['jobs'] = jobs_dict
+            for key, value in jobs_dict.items():
+                if key in self._game_state['jobs'].keys():
+                    self._game_state['jobs'][key].update(value)
+                else:
+                    self._game_state['jobs'][key] = value
 
         if data['message'] == 'JobDescriptionMessage':
             for desc in data['content']['jobsDescription']:
-                self._game_state['jobs'][str(desc['jobId'])]['skills'] = desc['skills']
+                if str(desc['jobId']) in self._game_state['jobs'].keys():
+                    self._game_state['jobs'][str(desc['jobId'])]['skills'] = desc['skills']
+                else:
+                    self._game_state['jobs'][str(desc['jobId'])] = {'skills': desc['skills']}
 
         if data['message'] == 'JobExperienceUpdateMessage':
             # TODO
@@ -161,6 +171,14 @@ class Listener:
         if data['message'] == 'ExchangeLeaveMessage':
             self._game_state['storage_open'] = False
             self._game_state['storage_content'] = {}
+
+        if data['message'] == 'InteractiveUsedMessage':
+            self._game_state['harvest_started'] = True
+            self._game_state['harvest_done'] = False
+
+        if data['message'] == 'InteractiveUseEndedMessage':
+            self._game_state['harvest_started'] = False
+            self._game_state['harvest_done'] = True
 
     def received_message(self, start_time, message_id):
         for message in self.messages_queue:

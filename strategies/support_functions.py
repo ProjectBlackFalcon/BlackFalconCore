@@ -22,7 +22,7 @@ def distance_cell(cell_1, cell_2):
     return dist(cell2coord(cell_1), cell2coord(cell_2))
 
 
-def coord_fetch_map(map_info, coord, worldmap):
+def fetch_map_cells(map_info, coord, worldmap):
     maps = []
     for map in map_info:
         if map['coord'] == coord and map['worldMap'] == worldmap:
@@ -53,7 +53,7 @@ def get_neighbour_cells(cell):
 def get_walkable_neighbour_cells(map_info, cell, map_coords, worldmap):
     walkable_neighbours = []
     for neighbour in get_neighbour_cells(cell):
-        if flatten_map(coord_fetch_map(map_info, '{};{}'.format(map_coords[0], map_coords[1]), worldmap))[neighbour] == 0:
+        if flatten_map(fetch_map_cells(map_info, '{};{}'.format(map_coords[0], map_coords[1]), worldmap))[neighbour] == 0:
             walkable_neighbours.append(neighbour)
     return walkable_neighbours[:]
 
@@ -74,8 +74,7 @@ def get_closest_walkable_neighbour_cell(map_info, target_cell, player_cell, map_
 
 
 def get_closest_reachable_cell(map_info, target_cell, player_cell, map_coords, worldmap):
-    map = coord_fetch_map(map_info, '{};{}'.format(map_coords[0], map_coords[1]), worldmap)
-    cells = map['cells']
+    cells = fetch_map_cells(map_info, '{};{}'.format(map_coords[0], map_coords[1]), worldmap)
     cells_vector = [item for sublist in cells for item in sublist]
 
     reachable_cells = []
@@ -83,11 +82,21 @@ def get_closest_reachable_cell(map_info, target_cell, player_cell, map_coords, w
         if cell_type not in [-1, 1, 2] and can_walk_to_node(cells_2_map(cells), player_cell, {'cell': cell}):
             reachable_cells.append(cell)
 
-    closest, distance = cells[0], distance_cell(cells[0], target_cell)
-    for cell in cells:
-        if distance_cell(cell, target_cell) < distance:
-            closest, distance = cell, distance_cell(cell, target_cell)
-    return closest
+    closest, distance = [], distance_cell(reachable_cells[0], target_cell)
+    for cell in reachable_cells:
+        if 0 < distance_cell(cell, target_cell):
+            if distance_cell(cell, target_cell) < distance:
+                closest, distance = [cell], distance_cell(cell, target_cell)
+            elif distance_cell(cell, target_cell) == distance:
+                closest.append(cell)
+
+    closest_to_player, distance = closest[0], sys.maxsize
+    for cell in closest:
+        if distance_cell(cell, player_cell) < distance:
+            closest_to_player, distance = cell, distance_cell(cell, player_cell)
+
+    return closest_to_player
+
 
 def mongo_client():
     return pymongo.MongoClient(

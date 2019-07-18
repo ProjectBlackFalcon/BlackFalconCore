@@ -6,7 +6,7 @@ from strategies import support_functions
 from tools import logger as log
 
 
-def use_zaap(**kwargs):
+def harvest(**kwargs):
     """
     Uses a zaap to get to a specified destination
     The bot must be on a map with a zaap
@@ -42,9 +42,10 @@ def use_zaap(**kwargs):
     for element in listener.game_state['map_elements']:
         if element_id == element['elementId']:
             if 'enabledSkills' in element.keys():
-                if 'skillId' in element['enabledSkills'].keys():
-                    skill_id = element['enabledSkills']['skillId']
-                    skill_uid = element['enabledSkills']['skillInstanceUid']
+                for skill in element['enabledSkills']:
+                    if 'skillId' in skill.keys():
+                        skill_id = skill['skillId']
+                        skill_uid = skill['skillInstanceUid']
     if skill_id is None:
         logger.warn('Resource at cell {} is not harvestable')
         strategy['report'] = {
@@ -89,10 +90,60 @@ def use_zaap(**kwargs):
         return strategy
 
     # TODO: Check if the player can reach the resource i.e. skill range >= manhattan distance between closest reachable cell and resource cell
-    # TODO: Move the bot the appropriate cell to use the resource
-    # TODO: Check if the resource is still available
-    # TODO: harvest
+    closest_reachable_cell = support_functions.get_closest_reachable_cell(assets['map_info'], resource_cell, listener.game_state['cell'], listener.game_state['pos'], listener.game_state['worldmap'])
+    dist = sum([abs(a - b) for a, b in zip(support_functions.cell_2_coord(closest_reachable_cell), support_functions.cell_2_coord(resource_cell))])
+    if dist > range:
+        logger.warn('Resource out of range')
+        strategy['report'] = {
+            'success': False,
+            'details': {'Reason': 'Resource out of range'}
+        }
+        return strategy
 
+    # TODO: Move the bot the appropriate cell to use the resource
+    sub_strategy = strategies.move.move(
+        listener=listener,
+        strategy={'bot': strategy['bot'], 'parameters': {'cell': closest_reachable_cell}},
+        orders_queue=orders_queue,
+        assets=assets
+    )
+    if not sub_strategy['report']['success']:
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': time.time() - start, 'Reason': 'Move to get to resource harvest spot failed'}
+        }
+        return strategy
+
+    # TODO: Check if the resource is still available
+    element_id = None
+    for element in listener.game_state['stated_elements']:
+        if element['elementCellId'] == resource_cell:
+            element_id = element['elementId']
+    if element_id is None:
+        logger.warn('Did not find a resource at cell {} in {}s'.format(resource_cell, 0))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Reason': 'Did not find a resource at cell {} in {}s'.format(resource_cell, 0)}
+        }
+        return strategy
+
+    skill_id, skill_uid = None, None
+    for element in listener.game_state['map_elements']:
+        if element_id == element['elementId']:
+            if 'enabledSkills' in element.keys():
+                for skill in element['enabledSkills']:
+                    if 'skillId' in skill.keys():
+                        skill_id = skill['skillId']
+                        skill_uid = skill['skillInstanceUid']
+    if skill_id is None:
+        logger.warn('Resource at cell {} is not harvestable'.format(resource_cell))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Reason': 'Resource at cell {} is not harvestable'.format(resource_cell)}
+        }
+        return strategy
+
+    # TODO: harvest
     order = {
         'command': 'use_interactive',
         'parameters': {
@@ -107,16 +158,34 @@ def use_zaap(**kwargs):
     timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
     waiting = True
     while waiting and time.time() - start < timeout:
+        if listener.game_state['harvest_started']:
+            waiting = False
+        time.sleep(0.05)
+    execution_time = time.time() - start
+
+    if waiting:
+        logger.warn('Failed to start harvest in {}s'.format(execution_time))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': execution_time, 'Reason': 'Failed to start harvest in {}s'.format(execution_time)}
+        }
+        return strategy
+
+    start = time.time()
+    timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
+    waiting = True
+    while waiting and time.time() - start < timeout:
         if listener.game_state['harvest_done']:
             waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
 
     if waiting:
-        logger.warn('Failed to perform harvest in {}s'.format(execution_time))
+        logger.warn('Harvest started but did not end ? in {}s'.format(execution_time))
         strategy['report'] = {
             'success': False,
-            'details': {'Execution time': execution_time, 'Reason': 'Failed to perform harvest in {}s'.format(execution_time)}
+            'details': {'Execution time': execution_time,
+                        'Reason': 'Harvest started but did not end ? in {}s'.format(execution_time)}
         }
         return strategy
 
