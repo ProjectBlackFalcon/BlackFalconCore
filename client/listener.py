@@ -46,10 +46,12 @@ class Listener:
             self.game_state = json.loads(json.dumps(self._game_state))
 
     def update_game_state(self, data):
-        # TODO: get and maintain stated elements
+        if data['message'] in ['JobExperienceMultiUpdateMessage', 'JobExperienceUpdateMessage']:
+            if data['message'] == 'JobExperienceMultiUpdateMessage':
+                jobs_dict = {str(job['jobId']): job for job in data['content']['experiencesUpdate']}
+            elif data['message'] == 'JobExperienceUpdateMessage':
+                jobs_dict = {str(data['content']['experiencesUpdate']['jobId']): data['content']['experiencesUpdate']}
 
-        if data['message'] == 'JobExperienceMultiUpdateMessage':
-            jobs_dict = {str(job['jobId']): job for job in data['content']['experiencesUpdate']}
             for key, value in jobs_dict.items():
                 if key in self._game_state['jobs'].keys():
                     self._game_state['jobs'][key].update(value)
@@ -63,9 +65,9 @@ class Listener:
                 else:
                     self._game_state['jobs'][str(desc['jobId'])] = {'skills': desc['skills']}
 
-        if data['message'] == 'JobExperienceUpdateMessage':
-            # TODO
-            pass
+        if data['message'] == 'JobLevelUpMessage':
+            self._game_state['jobs'][str(data['content']['jobsDescription']['jobId'])]['level'] = data['content']['newLevel']
+            self._game_state['jobs'][str(data['content']['jobsDescription']['jobId'])]['skills'] = data['content']['jobsDescription']['skills']
 
         if data['message'] == 'InventoryContentMessage':
             self._game_state['kamas'] = data['content']['kamas']
