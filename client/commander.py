@@ -1,3 +1,4 @@
+import json
 import os
 from random import randint
 
@@ -14,6 +15,7 @@ from tools.ws_connector import Connection
 from client.listener import Listener
 from tools import logger
 import strategies
+import hashlib
 
 
 class Commander:
@@ -39,6 +41,7 @@ class Commander:
         self.connection = Thread(target=Connection, args=('localhost', self.port, self.orders_queue, self.listener.output_queue, self.bot))
         self.connection.start()
         self.logger.info('New commander spawned for {}'.format(self.bot['name']))
+        Thread(target=self.interrupts).start()
         self.run()
 
     def run(self):
@@ -77,6 +80,31 @@ class Commander:
             pass
         sock.close()
         return result
+
+    def interrupts(self):
+        last_file_request_message = 0
+        while 1:
+            time.sleep(0.1)
+            if self.listener.game_state['file_request_message']['timestamp'] != last_file_request_message:
+                print('##################################')
+                last_file_request_message = self.listener.game_state['file_request_message']['timestamp']
+
+                file_name_hash = hashlib.md5(self.listener.game_state['file_request_message']['filename'].encode('utf-8')).hexdigest()
+
+                if self.listener.game_state['file_request_message']['type'] == 0:
+                    value = self.assets['hashes_and_sizes'][self.listener.game_state['file_request_message']['filename'].split('/')[-1].replace('.', '')]['size']
+                else:
+                    value = self.assets['hashes_and_sizes'][self.listener.game_state['file_request_message']['filename'].split('/')[-1].replace('.', '')]['md5']
+
+                order = {
+                    "command": "check_file_message",
+                    "parameters": {
+                        "filenameHash": file_name_hash,
+                        "type": self.listener.game_state['file_request_message']['type'],
+                        "value": value
+                    }
+                }
+                self.orders_queue.put((json.dumps(order),))
 
 
 if __name__ == '__main__':

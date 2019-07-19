@@ -32,7 +32,11 @@ class Listener:
             'storage_open': False,
             'jobs': {},
             'harvest_done': False,
-            'harvest_started': False
+            'harvest_started': False,
+            'map_players': [],
+            'map_elements': [],
+            'stated_elements': [],
+            'file_request_message': {'timestamp': 0}
         }
         self.game_state = json.loads(json.dumps(self._game_state))
         self.messages_queue = []
@@ -196,6 +200,13 @@ class Listener:
             if data['message'] == 'InteractiveUseEndedMessage':
                 self._game_state['harvest_started'] = False
                 self._game_state['harvest_done'] = True
+
+            if data['message'] == 'CheckFileRequestMessage':
+                self._game_state['file_request_message'] = {
+                    'timestamp': time.time(),
+                    'filename': data['content']['filename'],
+                    'type': data['content']['type']
+                }
 
     def received_message(self, start_time, message_id):
         for message in self.messages_queue:
