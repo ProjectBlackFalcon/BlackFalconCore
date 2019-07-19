@@ -1,6 +1,7 @@
 import ast
 import json
 import os
+import pymongo
 
 import numpy as np
 import queue
@@ -9,6 +10,7 @@ from threading import Thread
 from tkinter import *
 import requests
 import ws_connector
+from credentials import credentials
 
 
 def load_map_info():
@@ -162,39 +164,44 @@ def check_result(success_label):
         success_label['text'] = 'Failed'
         success_label['fg'] = 'red'
 
-    get_pos_info()
-
 
 def get_pos_info():
-    strategy = {
-        'bot': bot_name.get(),
-        'command': 'get_game_state'
-    }
-    orders[bot_name.get()].put((json.dumps(strategy),))
-    report = json.loads(reports[bot_name.get()].get()[0])
-    coords = report['report']['details']['game_state'][0]
-    worldmap = report['report']['details']['game_state'][1]
-    cell = report['report']['details']['game_state'][2]
-    pos_info_1['text'] = str(coords)
-    pos_info_2['text'] = str(worldmap) + ' | ' + str(cell)
-    map_data = fetch_map(f'{coords[0]};{coords[1]}', worldmap)
-    canvas.delete("all")
-    canvas.create_rectangle(0, 0, 340, 330, fill="light grey")
-    if map_data is not None:
-        map = cells_2_map(map_data['cells'])
+    client = pymongo.MongoClient(
+        host=credentials['mongo']['host'],
+        port=credentials['mongo']['port'],
+        username=credentials['mongo']['username'],
+        password=credentials['mongo']['password'],
+    )
+    previous_profile = None
+    while 1:
+        profile = client.blackfalcon.bots.find_one({'name': bot_name.get()})
+        if profile is None:
+            raise Exception('Bot does not exist. Create a profile using the \'new_bot\' command first.')
 
-        for y in range(len(map)):
-            for x in range(len(map[y])):
-                if map[y, x] == 0:
-                    canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='white')
-                if map[y, x] == 2:
-                    canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='dark grey')
-                if map[y, x] == 1:
-                    canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='grey')
-                if map[y, x] >= 3:
-                    canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='light green')
-        bot_pos = (14 - 1 - cell % 14 + int((cell // 14) / 2)), cell % 14 + int((cell // 14) / 2 + 0.5)
-        canvas.create_rectangle(bot_pos[1] * 10, bot_pos[0] * 10, (bot_pos[1] + 1) * 10, (bot_pos[0] + 1) * 10, fill='red')
+        if profile != previous_profile:
+            pos_info_1['text'] = str(profile['position'])
+            pos_info_2['text'] = str(profile['worldmap']) + ' | ' + str(profile['cell'])
+            map_data = fetch_map(f'{profile["position"][0]};{profile["position"][1]}', profile['worldmap'])
+            canvas.delete("all")
+            canvas.create_rectangle(0, 0, 340, 330, fill="light grey")
+            if map_data is not None:
+                map = cells_2_map(map_data['cells'])
+
+                for y in range(len(map)):
+                    for x in range(len(map[y])):
+                        if map[y, x] == 0:
+                            canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='white')
+                        if map[y, x] == 2:
+                            canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='dark grey')
+                        if map[y, x] == 1:
+                            canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='grey')
+                        if map[y, x] >= 3:
+                            canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='light green')
+                bot_pos = (14 - 1 - profile['cell'] % 14 + int((profile['cell'] // 14) / 2)), profile['cell'] % 14 + int((profile['cell'] // 14) / 2 + 0.5)
+                canvas.create_rectangle(bot_pos[1] * 10, bot_pos[0] * 10, (bot_pos[1] + 1) * 10, (bot_pos[0] + 1) * 10, fill='red')
+            previous_profile = profile
+            time.sleep(0.5)
+        time.sleep(0.5)
 
 
 def login(orders, reports):
@@ -260,5 +267,7 @@ canvas_coords.grid(row=2, column=2)
 canvas.grid(row=0, rowspan=2, column=2)
 canvas.bind("<Motion>", moved)
 canvas.create_rectangle(0, 0, 340, 330, fill="light grey")
+
+Thread(target=get_pos_info).start()
 
 tk.mainloop()

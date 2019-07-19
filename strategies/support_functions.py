@@ -119,6 +119,8 @@ def create_profile(id, bot_name, username, password, server):
         'known_zaaps': [],
         'sub_end': 0,
         'position': (69, 420),
+        'cell': 0,
+        'worldmap': 1,
         'banned': False,
         'stuff': {},
         'stats': {},
@@ -130,17 +132,26 @@ def delete_profile(bot_name):
     mongo_client().blackfalcon.bots.delete_one({'name': bot_name})
 
 
-def get_profile(bot_name):
-    client = mongo_client()
+def get_profile(bot_name, client=None):
+    if client is None:
+        client = mongo_client()
     profile = client.blackfalcon.bots.find_one({'name': bot_name})
     if profile is None:
         raise Exception('Bot does not exist. Create a profile using the \'new_bot\' command first.')
     return profile
 
 
-def update_profile(bot_name, new_profile):
-    client = mongo_client()
+def update_profile_full(bot_name, new_profile, client=None):
+    if client is None:
+        client = mongo_client()
     client.blackfalcon.bots.replace_one({'name': bot_name}, new_profile)
+
+
+def update_profile(bot_name, key, new_value):
+    client = mongo_client()
+    profile = get_profile(bot_name, client=client)
+    profile[key] = new_value
+    update_profile_full(bot_name, profile, client=client)
 
 
 def get_known_zaaps(bot_name):
@@ -154,7 +165,7 @@ def add_known_zaap(bot_name, pos: list):
     profile = get_profile(bot_name)
     if pos not in profile['known_zaaps']:
         profile['known_zaaps'].append(pos)
-        update_profile(bot_name, profile)
+        update_profile_full(bot_name, profile)
 
 
 def get_closest_known_zaap(bot_name, pos):
