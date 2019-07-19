@@ -47,10 +47,10 @@ def harvest(**kwargs):
                         skill_id = skill['skillId']
                         skill_uid = skill['skillInstanceUid']
     if skill_id is None:
-        logger.warn('Resource at cell {} is not harvestable')
+        logger.warn('Resource at cell {} is not harvestable'.format(resource_cell))
         strategy['report'] = {
             'success': False,
-            'details': {'Reason': 'Resource at cell {} is not harvestable'}
+            'details': {'Reason': 'Resource at cell {} is not harvestable'.format(resource_cell)}
         }
         return strategy
 
@@ -144,6 +144,7 @@ def harvest(**kwargs):
         return strategy
 
     # TODO: harvest
+    inventory_before_harvest = json.loads(json.dumps(listener.game_state['inventory']))
     order = {
         'command': 'use_interactive',
         'parameters': {
@@ -189,11 +190,27 @@ def harvest(**kwargs):
         }
         return strategy
 
-    logger.info('Harvested in {}s'.format(execution_time))
+    collected = {}
+    inventory_after_harvest = json.loads(json.dumps(listener.game_state['inventory']))
+    for item in inventory_after_harvest:
+        was_in_inventory = False
+        for item_before in inventory_before_harvest:
+            if item['objectUID'] == item_before['objectUID']:
+                was_in_inventory = True
+                if item['quantity'] != item_before['quantity']:
+                    if assets['id_2_names'][str(item['objectGID'])] in collected.keys():
+                        collected[assets['id_2_names'][str(item['objectGID'])]] += item['quantity'] - item_before['quantity']
+                    else:
+                        collected[assets['id_2_names'][str(item['objectGID'])]] = item['quantity'] - item_before['quantity']
+
+        if not was_in_inventory:
+            collected[assets['id_2_names'][str(item['objectGID'])]] = item['quantity']
+
+    logger.info('Harvested {} in {}s'.format(collected, execution_time))
 
     strategy['report'] = {
         'success': True,
-        'details': {'Execution time': execution_time}
+        'details': {'Execution time': execution_time, 'Collected': collected}
     }
 
     log.close_logger(logger)
