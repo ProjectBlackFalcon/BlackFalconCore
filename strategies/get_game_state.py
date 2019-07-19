@@ -27,7 +27,7 @@ def get_game_state(**kwargs):
     pos = game_state['pos'] if 'pos' in game_state else [-100, -100]
     worldmap = game_state['worldmap'] if 'worldmap' in game_state else -100
     cell = game_state['cell'] if 'cell' in game_state else -100
-    misc_stat = game_state['jobs'] if 'jobs' in game_state.keys() else None
+    misc_stat = game_state['inventory'] if 'inventory' in game_state.keys() else None
 
     strategy['report'] = {
         'success': True,

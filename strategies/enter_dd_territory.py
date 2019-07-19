@@ -37,6 +37,7 @@ def enter_dd_territory(**kwargs):
             'details': {'Execution time': time.time() - start,
                         'Reason': 'Could not find the stairs door at {}, map id : {}'.format(current_map, listener.game_state['map_id'])}
         }
+        log.close_logger(logger)
         return strategy
     report = strategies.move.move(
         strategy={

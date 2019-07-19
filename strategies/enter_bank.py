@@ -49,6 +49,7 @@ def enter_bank(**kwargs):
             'details': {'Execution time': time.time() - start,
                         'Reason': 'Could not find a Zaap at {}, map id : {}'.format(current_map, listener.game_state['map_id'])}
         }
+        log.close_logger(logger)
         return strategy
 
     door_use_cell = strategies.support_functions.get_closest_walkable_neighbour_cell(assets['map_info'], door_cell, current_cell, current_map, listener.game_state['worldmap'])
@@ -63,6 +64,7 @@ def enter_bank(**kwargs):
             'success': False,
             'details': {'Execution time': time.time() - start, 'Reason': 'Move to get to door failed'}
         }
+        log.close_logger(logger)
         return strategy
 
     order = {
@@ -90,6 +92,7 @@ def enter_bank(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Failed to open bank door in {}s'.format(execution_time)}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Entered bank in {}s'.format(execution_time))

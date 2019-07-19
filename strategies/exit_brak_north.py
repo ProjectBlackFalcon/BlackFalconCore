@@ -36,6 +36,7 @@ def exit_brak_north(**kwargs):
             'success': False,
             'details': {'Execution time': time.time() - start, 'Reason': 'Could not find a brak door at {}, map id : {}'.format(current_map, listener.game_state['map_id'])}
         }
+        log.close_logger(logger)
         return strategy
 
     report = strategies.move.move(

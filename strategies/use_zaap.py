@@ -40,6 +40,7 @@ def use_zaap(**kwargs):
             'success': False,
             'details': {'Execution time': time.time() - start, 'Reason': 'Could not find a Zaap at {}, map id : {}'.format(current_map, listener.game_state['map_id'])}
         }
+        log.close_logger(logger)
         return strategy
 
     if not listener.game_state['in_haven_bag']:
@@ -55,6 +56,7 @@ def use_zaap(**kwargs):
                 'success': False,
                 'details': {'Execution time': time.time() - start, 'Reason': 'Move to get to zaap failed'}
             }
+            log.close_logger(logger)
             return strategy
 
     order = {
@@ -82,6 +84,7 @@ def use_zaap(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout when opening zaap menu'}
         }
+        log.close_logger(logger)
         return strategy
 
     logger.info('Opened zaap menu in {}s'.format(execution_time))
@@ -98,6 +101,7 @@ def use_zaap(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Zaap at destination [{},{}] is not known'.format(strategy['parameters']['destination_x'], strategy['parameters']['destination_y'])}
         }
+        log.close_logger(logger)
         return strategy
 
     if selected_destination['cost'] > listener.game_state['kamas']:
@@ -106,6 +110,7 @@ def use_zaap(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Not enough money to use zaap: needed {}, available: {}'.format(selected_destination['cost'], listener.game_state['kamas'])}
         }
+        log.close_logger(logger)
         return strategy
 
     order = {
@@ -131,6 +136,7 @@ def use_zaap(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Teleport by zaap failed'}
         }
+        log.close_logger(logger)
         return strategy
 
     strategy['report'] = {

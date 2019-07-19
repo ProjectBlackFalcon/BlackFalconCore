@@ -55,6 +55,7 @@ def exit_bank(**kwargs):
                 'Reason': 'Could not find a change map cell at {}, map id : {}'.format(current_map, listener.game_state['map_id'])
             }
         }
+        log.close_logger(logger)
         return strategy
 
     order = {
