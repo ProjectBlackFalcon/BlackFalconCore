@@ -216,3 +216,11 @@ For the orders exchanged between the commander and the low level API, see the or
   }
 }
 ````
+
+### Harvest map
+````json
+{
+  "bot": "Mystinu",
+  "command": "harvest_map"
+}
+````
