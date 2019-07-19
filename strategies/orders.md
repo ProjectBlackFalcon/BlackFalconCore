@@ -27,6 +27,18 @@ For the strategies, see the strategies.md in the swarm_manager folder.
 }
 ```
 
+### Check file message
+```json
+{
+  "command": "check_file_message",
+  "parameters": {
+      "filenameHash": "1s6df51sd1fs1dfsd12f3s1df3s1",
+      "type": 0,
+      "value": "15sxdf42sd542xf1ds54f12dsf2"
+  }
+}
+```
+
 ### Move
 ```json
 {
