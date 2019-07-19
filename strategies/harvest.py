@@ -36,6 +36,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Reason': 'Did not find a resource at cell {} in {}s'.format(resource_cell, 0)}
         }
+        log.close_logger(logger)
         return strategy
 
     skill_id, skill_uid = None, None
@@ -52,6 +53,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Reason': 'Resource at cell {} is not harvestable'.format(resource_cell)}
         }
+        log.close_logger(logger)
         return strategy
 
     # TODO: Check if the player has the skill level to harvest it
@@ -66,6 +68,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Reason': 'Skill id not found'}
         }
+        log.close_logger(logger)
         return strategy
 
     bot_skill_level = None
@@ -79,6 +82,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Reason': 'Could not determine bot skill level'}
         }
+        log.close_logger(logger)
         return strategy
 
     if bot_skill_level < required_skill_level:
@@ -87,6 +91,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Reason': 'Bot skill level insufficient'}
         }
+        log.close_logger(logger)
         return strategy
 
     # TODO: Check if the player can reach the resource i.e. skill range >= manhattan distance between closest reachable cell and resource cell
@@ -98,6 +103,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Reason': 'Resource out of range'}
         }
+        log.close_logger(logger)
         return strategy
 
     # TODO: Move the bot the appropriate cell to use the resource
@@ -112,6 +118,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Execution time': time.time() - start, 'Reason': 'Move to get to resource harvest spot failed'}
         }
+        log.close_logger(logger)
         return strategy
 
     # TODO: Check if the resource is still available
@@ -125,6 +132,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Reason': 'Did not find a resource at cell {} in {}s'.format(resource_cell, 0)}
         }
+        log.close_logger(logger)
         return strategy
 
     skill_id, skill_uid = None, None
@@ -141,6 +149,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Reason': 'Resource at cell {} is not harvestable'.format(resource_cell)}
         }
+        log.close_logger(logger)
         return strategy
 
     # TODO: harvest
@@ -170,6 +179,7 @@ def harvest(**kwargs):
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Failed to start harvest in {}s'.format(execution_time)}
         }
+        log.close_logger(logger)
         return strategy
 
     start = time.time()
@@ -188,6 +198,7 @@ def harvest(**kwargs):
             'details': {'Execution time': execution_time,
                         'Reason': 'Harvest started but did not end ? in {}s'.format(execution_time)}
         }
+        log.close_logger(logger)
         return strategy
 
     collected = {}
@@ -210,7 +221,10 @@ def harvest(**kwargs):
 
     strategy['report'] = {
         'success': True,
-        'details': {'Execution time': execution_time, 'Collected': collected}
+        'details': {
+            'Execution time': execution_time,
+            'Collected': collected
+        }
     }
 
     log.close_logger(logger)

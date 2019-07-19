@@ -10,7 +10,7 @@ from threading import Thread
 from websocket_server import WebsocketServer
 
 import strategies
-from strategies import support_functions, connect
+from strategies import support_functions
 from strategies import *
 from client.commander import Commander
 from tools import logger
