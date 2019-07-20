@@ -92,6 +92,9 @@ class Listener:
             if data['message'] == 'KamasUpdateMessage':
                 self._game_state['kamas'] = data['content']['kamasTotal']
 
+            if data['message'] == 'StorageKamasUpdateMessage':
+                self._game_state['storage_content']['kamas'] = data['content']['kamasTotal']
+
             if data['message'] == 'CharacterSelectedSuccessMessage':
                 self._game_state['level'] = data['content']['infos']['level']
                 self._game_state['actor_id'] = data['content']['infos']['id']

@@ -206,6 +206,72 @@ For the orders exchanged between the commander and the low level API, see the or
 }
 ````
 
+### Bank get kamas
+````json
+{
+  "bot": "Mystinu",
+  "command": "bank_get_kamas",
+  "parameters": {
+    "quantity": 1000
+  }
+}
+````
+If quantity is not specified, all is assumed.
+
+### Bank put kamas
+````json
+{
+  "bot": "Mystinu",
+  "command": "bank_put_kamas",
+  "parameters": {
+    "quantity": 1000
+  }
+}
+````
+If quantity is not specified, all is assumed.
+
+### Bank get items
+````json
+{
+  "bot": "Mystinu",
+  "command": "bank_get_items",
+  "parameters": {
+    "items": [
+      {
+        "general_id": 425,
+        "quantity": 1000
+      },
+      {
+        "general_id": 425
+      } 
+    ]
+  }
+}
+````
+if `items == 'all'`, all the items are moved
+If quantity is not specified, all is assumed.
+
+### Bank put items
+````json
+{
+  "bot": "Mystinu",
+  "command": "bank_put_items",
+  "parameters": {
+    "items": [
+      {
+        "general_id": 425,
+        "quantity": 1000
+      },
+      {
+        "general_id": 425
+      } 
+    ]
+  }
+}
+````
+if `items == 'all'`, all the items are moved
+If quantity is not specified for an item, all is assumed.
+
 ### Harvest
 ````json
 {

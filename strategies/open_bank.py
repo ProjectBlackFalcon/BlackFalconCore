@@ -73,7 +73,7 @@ def open_bank(**kwargs):
     timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
     waiting = True
     while waiting and time.time() - start < timeout:
-        if 'pos' in listener.game_state.keys():
+        if 'storage_open' in listener.game_state.keys():
             if listener.game_state['storage_open']:
                 waiting = False
         time.sleep(0.05)
