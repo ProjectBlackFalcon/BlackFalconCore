@@ -82,12 +82,8 @@ class Listener:
 
             if data['message'] == 'InventoryWeightMessage':
                 self._game_state['weight'] = data['content']['inventoryWeight']
-                self._game_state['max_weight'] = data['content']['weightMax']
-
-            if data['message'] == 'ObjectQuantityMessage':
-                for item in self._game_state['inventory']:
-                    if item['objectUID'] == data['content']['objectUID']:
-                        item['quantity'] = data['content']['quantity']
+                if data['content']['weightMax'] != 0:
+                    self._game_state['max_weight'] = data['content']['weightMax']
 
             if data['message'] == 'KamasUpdateMessage':
                 self._game_state['kamas'] = data['content']['kamasTotal']
@@ -194,7 +190,7 @@ class Listener:
 
             if data['message'] == 'ExchangeLeaveMessage':
                 self._game_state['storage_open'] = False
-                self._game_state['storage_content'] = {}
+                self._game_state['storage_content'] = []
 
             if data['message'] == 'InteractiveUsedMessage':
                 self._game_state['harvest_started'] = True
@@ -210,6 +206,65 @@ class Listener:
                     'filename': data['content']['filename'],
                     'type': data['content']['type']
                 }
+
+            if data['message'] == 'ObjectQuantityMessage':
+                for item in self._game_state['inventory']:
+                    if item['objectUID'] == data['content']['objectUID']:
+                        item['quantity'] = data['content']['quantity']
+
+            if data['message'] == 'ObjectsQuantityMessage':
+                for new_item in data['content']['objectsUIDAndQty']:
+                    for item in self._game_state['inventory']:
+                        if item['objectUID'] == new_item['objectUID']:
+                            item['quantity'] = new_item['quantity']
+
+            if data['message'] == 'ObjectDeletedMessage':
+                for index, item in enumerate(self._game_state['inventory']):
+                    if item['objectUID'] == data['content']['objectUID']:
+                        del self._game_state['inventory'][index]
+                        break
+
+            if data['message'] == 'ObjectsDeletedMessage':
+                for uid in data['content']['objectUID']:
+                    for index, item in enumerate(self._game_state['inventory']):
+                        if item['objectUID'] == uid:
+                            del self._game_state['inventory'][index]
+                            break
+
+            if data['message'] == 'ObjectAddedMessage':
+                self._game_state['inventory'].append(data['content']['object'])
+
+            if data['message'] == 'ObjectsAddedMessage':
+                self._game_state['inventory'] += data['content']['object']
+
+            if data['message'] == 'StorageObjectUpdateMessage':
+                for item in self._game_state['storage_content']['objects']:
+                    if item['objectUID'] == data['content']['object']['objectUID']:
+                        item['quantity'] = data['content']['object']['quantity']
+
+            if data['message'] == 'StorageObjectsUpdateMessage':
+                for new_item in data['content']['objectList']:
+                    found = False
+                    for index, item in enumerate(self._game_state['storage_content']['objects']):
+                        if item['objectUID'] == new_item['objectUID']:
+                            found = True
+                            self._game_state['storage_content']['objects'][index] = new_item
+                            break
+                    if not found:
+                        self._game_state['storage_content']['objects'].append(new_item)
+
+            if data['message'] == 'StorageObjectRemoveMessage':
+                for index, item in enumerate(self._game_state['storage_content']['objects']):
+                    if item['objectUID'] == data['content']['objectUID']:
+                        del self._game_state['storage_content']['objects'][index]
+                        break
+
+            if data['message'] == 'StorageObjectsRemoveMessage':
+                for uid in data['content']['objectUIDList']:
+                    for index, item in enumerate(self._game_state['storage_content']['objects']):
+                        if item['objectUID'] == uid:
+                            del self._game_state['storage_content']['objects'][index]
+                            break
 
     def received_message(self, start_time, message_id):
         for message in self.messages_queue:

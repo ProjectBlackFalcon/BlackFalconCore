@@ -22,7 +22,7 @@ def bank_get_kamas(**kwargs):
     global_start, start = time.time(), time.time()
 
     kamas_to_transfer = 'all'
-    if 'parameters' in strategy.keys() and 'quantity' in strategy['parameters'].keys():
+    if 'parameters' in strategy.keys() and 'quantity' in strategy['parameters'].keys() and strategy['parameters']['quantity'] is not None:
         kamas_to_transfer = strategy['parameters']['quantity']
 
     if not listener.game_state['storage_open']:

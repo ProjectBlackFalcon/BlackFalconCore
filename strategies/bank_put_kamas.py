@@ -22,7 +22,7 @@ def bank_put_kamas(**kwargs):
     global_start, start = time.time(), time.time()
 
     kamas_to_transfer = 'all'
-    if 'parameters' in strategy.keys() and 'quantity' in strategy['parameters'].keys():
+    if 'parameters' in strategy.keys() and 'quantity' in strategy['parameters'].keys() and strategy['parameters']['quantity'] is not None:
         kamas_to_transfer = strategy['parameters']['quantity']
 
     if not listener.game_state['storage_open']:
@@ -38,7 +38,7 @@ def bank_put_kamas(**kwargs):
     kamas_to_transfer = kamas_in_inventory if kamas_to_transfer == 'all' else kamas_to_transfer
 
     if kamas_to_transfer > kamas_in_inventory:
-        logger.warning('Cannot get {} kamas from bank, only {} are available'.format(kamas_to_transfer, kamas_in_inventory))
+        logger.warning('Cannot put {} kamas in the bank, only {} are available'.format(kamas_to_transfer, kamas_in_inventory))
         strategy['report'] = {
             'success': False,
             'details': {'Execution time': time.time() - global_start, 'Reason': 'Cannot put {} kamas in the bank, only {} are available'.format(kamas_to_transfer, kamas_in_inventory)}
