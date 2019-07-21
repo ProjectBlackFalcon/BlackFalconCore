@@ -111,10 +111,15 @@ TODO: fix parameters
   "command": "open_npc",
   "parameters": {
      "map_id": 166516844,
-     "npc_id": 651946516
+     "npc_id": 651946516,
+     "action_id": 3
   }
 }
 ````
+actions_ids:
+- 3: talk
+- 5: swap auction house to sell mode
+- 6: swap auction house to buy mode
 
 ### Close NPC
 ````json
@@ -186,3 +191,51 @@ TODO: fix parameters
 ````
 - Positive values means from inventory to storage
 - Negative values means from storage to inventory
+
+
+### Select category
+````json
+{
+  "command": "auctionh_select_category",
+  "parameters":{
+    "category_id": 41
+  }
+}
+````
+
+### Select item
+````json
+{
+  "command": "auctionh_select_item",
+  "parameters":{
+    "general_id": 1782
+  }
+}
+````
+Should send the `ExchangeBidHouseListMessage` AND the `ExchangeBidHousePriceMessage`
+
+### Buy item
+````json
+{
+  "command": "auctionh_buy_item",
+  "parameters":{
+    "unique_id": 43657,
+    "quantity": 10,
+    "price": 10000
+  }
+}
+````
+Should also send the `ExchangeBidHousePriceMessage`
+
+### Buy item
+````json
+{
+  "command": "auctionh_sell_item",
+  "parameters":{
+    "unique_id": 43657,
+    "quantity": 10,
+    "price": 10000
+  }
+}
+````
+Should also send the `ExchangeBidHousePriceMessage`
