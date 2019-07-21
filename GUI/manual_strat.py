@@ -145,7 +145,10 @@ def execute_strat(form):
             if field[1].get() == '':
                 parameters[field[0].cget('text')] = None
             else:
-                parameters[field[0].cget('text')] = field[1].get()
+                try:
+                    parameters[field[0].cget('text')] = ast.literal_eval(field[1].get())
+                except:
+                    parameters[field[0].cget('text')] = field[1].get()
     strategy['parameters'] = parameters
 
     success_label = Label(form_frame, text='Pending...', fg='orange')
@@ -247,7 +250,7 @@ Button(login_frame, text='Login', command=lambda: login(orders, reports)).grid(r
 
 Label(main_frame, text="Bot name").grid(row=2, column=1)
 bot_name = Entry(main_frame)
-bot_name.insert(END, 'Mystinu')
+bot_name.insert(END, 'Usain-bot')
 bot_name.grid(row=2, column=2)
 
 selected_strat = StringVar(tk)
