@@ -302,3 +302,66 @@ If quantity is not specified for an item, all is assumed.
 `blacklist` and `whitelist` are optional can not be used at the same time in the same harvest strategy
 - `whitelist` only authorises the items listed to be harvested
 - `blacklist` only authorises the items not listed to be harvested
+
+
+### Open auction house
+````json
+{
+  "bot": "Mystinu",
+  "command": "auctionh_open",
+  "parameters": {
+    "mode": "buy"
+  }
+}
+````
+Modes can be `buy` or `sell`
+Optional parameter, default is buy
+
+### Close auction house
+````json
+{
+  "bot": "Mystinu",
+  "command": "auctionh_close"
+}
+````
+
+### Get items prices
+````json
+{
+  "bot": "Mystinu",
+  "command": "auctionh_get_prices",
+  "parameters": {
+    "general_ids_list": [421, 1782]
+  }
+}
+````
+
+### Buy items
+````json
+{
+  "bot": "Mystinu",
+  "command": "auctionh_buy",
+  "items": [
+      {
+        "unique_id": 154651616,
+        "pack_size": 100,
+        "quantity": 2
+      }
+  ]
+}
+````
+
+### Sell items
+````json
+{
+  "bot": "Mystinu",
+  "command": "auctionh_sell",
+  "items": [
+      {
+        "unique_id": 154651616,
+        "pack_size": 100,
+        "quantity": 2
+      }
+  ]
+}
+````

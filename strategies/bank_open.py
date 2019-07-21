@@ -36,6 +36,7 @@ def bank_open(**kwargs):
         'parameters': {
             'map_id': listener.game_state['map_id'],
             'npc_id': -20001,
+            'action_id': 3
         }
     }
     logger.info('Sending order to bot API: {}'.format(order))
