@@ -6,7 +6,7 @@ import strategies
 from strategies import support_functions
 
 
-def enter_bank(**kwargs):
+def bank_enter(**kwargs):
     """
     A strategy to enter a bank
 

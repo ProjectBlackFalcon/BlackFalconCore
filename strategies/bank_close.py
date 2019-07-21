@@ -5,7 +5,7 @@ from tools import logger as log
 import strategies
 
 
-def close_bank(**kwargs):
+def bank_close(**kwargs):
     """
     A strategy to close a bank
 

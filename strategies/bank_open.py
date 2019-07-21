@@ -5,7 +5,7 @@ from tools import logger as log
 import strategies
 
 
-def open_bank(**kwargs):
+def bank_open(**kwargs):
     """
     A strategy to open a bank
 

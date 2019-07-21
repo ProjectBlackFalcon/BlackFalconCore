@@ -6,7 +6,7 @@ import strategies
 from strategies import support_functions
 
 
-def exit_bank(**kwargs):
+def bank_exit(**kwargs):
     """
     A strategy to exit a bank
 

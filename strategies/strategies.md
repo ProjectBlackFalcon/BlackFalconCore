@@ -178,7 +178,7 @@ For the orders exchanged between the commander and the low level API, see the or
 ````json
 {
   "bot": "Mystinu",
-  "command": "open_bank"
+  "command": "bank_open"
 }
 ````
 
@@ -186,7 +186,7 @@ For the orders exchanged between the commander and the low level API, see the or
 ````json
 {
   "bot": "Mystinu",
-  "command": "close_bank"
+  "command": "bank_close"
 }
 ````
 
@@ -194,7 +194,7 @@ For the orders exchanged between the commander and the low level API, see the or
 ````json
 {
   "bot": "Mystinu",
-  "command": "enter_bank"
+  "command": "bank_enter"
 }
 ````
 
@@ -202,7 +202,7 @@ For the orders exchanged between the commander and the low level API, see the or
 ````json
 {
   "bot": "Mystinu",
-  "command": "exit_bank"
+  "command": "bank_exit"
 }
 ````
 
