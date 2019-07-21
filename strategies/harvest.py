@@ -25,7 +25,27 @@ def harvest(**kwargs):
     logger = log.get_logger(__name__, strategy['bot'])
     start, global_start = time.time(), time.time()
 
-    # TODO: Check if the cell has an available resource
+    # Manage whitelist/blacklist
+    if 'whitelist' in strategy['parameters'].keys() and \
+            strategy['parameters']['whitelist'] is not None and \
+            'blacklist' in strategy['parameters'].keys() and \
+            strategy['parameters']['blacklist'] is not None:
+        logger.warn('You can not have a whitelist and a blacklist at the same time')
+        strategy['report'] = {
+            'success': False,
+            'details': {'Reason': 'You can not have a whitelist and a blacklist at the same time'}
+        }
+        log.close_logger(logger)
+        return strategy
+
+    if 'whitelist' in strategy['parameters'].keys() and strategy['parameters']['whitelist'] is not None:
+        whitelist = strategy['parameters']['whitelist']
+    elif 'blacklist' in strategy['parameters'].keys() and strategy['parameters']['blacklist'] is not None:
+        whitelist = [int(key) for key in assets['id_2_names'].keys() if key not in strategy['parameters']['blacklist']]
+    else:
+        whitelist = [int(key) for key in assets['id_2_names'].keys()]
+
+    # Check if the cell has an available resource
     element_id = None
     for element in listener.game_state['stated_elements']:
         if element['elementCellId'] == resource_cell:
@@ -56,7 +76,18 @@ def harvest(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    # TODO: Check if the player has the skill level to harvest it
+    # Check if the resource is whitelisted
+    for skill in assets['Skills']:
+        if skill['id'] == skill_id and skill['gatheredRessourceItem'] not in whitelist:
+            logger.warn('Resource ({}/{}) at cell {} is not whitelisted'.format(skill['gatheredRessourceItem'], assets['id_2_names'][str(skill['gatheredRessourceItem'])], resource_cell))
+            strategy['report'] = {
+                'success': False,
+                'details': {'Reason': 'Resource ({}/{}) at cell {} is not whitelisted'.format(skill['gatheredRessourceItem'], assets['id_2_names'][str(skill['gatheredRessourceItem'])], resource_cell)}
+            }
+            log.close_logger(logger)
+            return strategy
+
+    # Check if the player has the skill level to harvest it
     required_skill_level, range = None, None
     for skill in assets['Skills']:
         if skill['id'] == skill_id:
@@ -94,7 +125,7 @@ def harvest(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    # TODO: Check if the player can reach the resource i.e. skill range >= manhattan distance between closest reachable cell and resource cell
+    # Check if the player can reach the resource i.e. skill range >= manhattan distance between closest reachable cell and resource cell
     closest_reachable_cell = support_functions.get_closest_reachable_cell(assets['map_info'], resource_cell, listener.game_state['cell'], listener.game_state['pos'], listener.game_state['worldmap'])
     dist = sum([abs(a - b) for a, b in zip(support_functions.cell_2_coord(closest_reachable_cell), support_functions.cell_2_coord(resource_cell))])
     if dist > range:
@@ -106,7 +137,7 @@ def harvest(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    # TODO: Move the bot the appropriate cell to use the resource
+    # Move the bot the appropriate cell to use the resource
     sub_strategy = strategies.move.move(
         listener=listener,
         strategy={'bot': strategy['bot'], 'parameters': {'cell': closest_reachable_cell}},
@@ -121,7 +152,7 @@ def harvest(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    # TODO: Check if the resource is still available
+    # Check if the resource is still available
     element_id = None
     for element in listener.game_state['stated_elements']:
         if element['elementCellId'] == resource_cell:
@@ -152,7 +183,7 @@ def harvest(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    # TODO: harvest
+    # harvest
     inventory_before_harvest = json.loads(json.dumps(listener.game_state['inventory']))
     order = {
         'command': 'use_interactive',

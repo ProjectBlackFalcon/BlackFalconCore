@@ -23,6 +23,22 @@ def harvest_map(**kwargs):
     logger = log.get_logger(__name__, strategy['bot'])
     start, global_start = time.time(), time.time()
 
+    # Manage whitelist/blacklist
+    if 'whitelist' in strategy['parameters'].keys() and \
+            strategy['parameters']['whitelist'] is not None and \
+            'blacklist' in strategy['parameters'].keys() and \
+            strategy['parameters']['blacklist'] is not None:
+        logger.warn('You can not have a whitelist and a blacklist at the same time')
+        strategy['report'] = {
+            'success': False,
+            'details': {'Reason': 'You can not have a whitelist and a blacklist at the same time'}
+        }
+        log.close_logger(logger)
+        return strategy
+
+    whitelist = strategy['parameters']['whitelist'] if 'whitelist' in strategy['parameters'].keys() else None
+    blacklist = strategy['parameters']['blacklist'] if 'blacklist' in strategy['parameters'].keys() else None
+
     resource_cells = []
     for element in listener.game_state['stated_elements']:
         resource_cells.append(element['elementCellId'])
@@ -48,7 +64,14 @@ def harvest_map(**kwargs):
     for cell in path:
         sub_strategy = strategies.harvest.harvest(
             listener=listener,
-            strategy={'bot': strategy['bot'], 'parameters': {'cell': cell}},
+            strategy={
+                'bot': strategy['bot'],
+                'parameters': {
+                    'cell': cell,
+                    'whitelist': whitelist,
+                    'blacklist': blacklist
+                }
+            },
             orders_queue=orders_queue,
             assets=assets
         )

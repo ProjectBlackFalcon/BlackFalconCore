@@ -278,15 +278,27 @@ If quantity is not specified for an item, all is assumed.
   "bot": "Mystinu",
   "command": "harvest",
   "parameters": {
-      "cell": 199
+      "cell": 199,
+      "blacklist": [421],
+      "whitelist": [456]
   }
 }
 ````
+`blacklist` and `whitelist` are optional can not be used at the same time in the same harvest strategy
+- `whitelist` only authorises the items listed to be harvested
+- `blacklist` only authorises the items not listed to be harvested
 
 ### Harvest map
 ````json
 {
   "bot": "Mystinu",
-  "command": "harvest_map"
+  "command": "harvest_map",
+  "parameters": {
+      "blacklist": [421],
+      "whitelist": [456]
+  }
 }
 ````
+`blacklist` and `whitelist` are optional can not be used at the same time in the same harvest strategy
+- `whitelist` only authorises the items listed to be harvested
+- `blacklist` only authorises the items not listed to be harvested
