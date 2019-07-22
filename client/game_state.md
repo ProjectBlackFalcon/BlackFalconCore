@@ -16,7 +16,7 @@
     "kamas": 1000000,
     "weight": 122,
     "max_weight": 2000,
-    "inventory": [],
+    "inventory": [], // TODO
     "in_haven_bag": false,
     "npc_dialog_open": false,
     "npc_current_question": [],
@@ -72,7 +72,7 @@
             "npcId":1088
         }
     ],
-    "map_players": [],
+    "map_players": [], // TODO
     "map_elements": [
         {  
             "elementId":516111,
@@ -96,7 +96,7 @@
         }
     ],
     "storage_open": false,
-    "storage_content": [],
+    "storage_content": [], // TODO
     "jobs": {  
         "26": {
             "jobId": 26,
@@ -113,6 +113,30 @@
                 }
             ]
         }
-    }
+    },
+    "auction_house_info": { 
+      "buyerDescriptor":{ 
+         "quantities":[ 
+            1,
+            10,
+            100
+         ],
+         "types":[ 
+            1,
+            9,
+            2,
+            114,
+            3,
+            4,
+            5
+         ],
+         "taxPercentage":2.0,
+         "taxModificationPercentage":1.0,
+         "maxItemLevel":60,
+         "maxItemPerAccount":20,
+         "npcContextualId":-1,
+         "unsoldDelay":672
+      }
+   }
 }
 ````
