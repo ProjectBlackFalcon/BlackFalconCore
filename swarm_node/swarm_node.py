@@ -146,8 +146,13 @@ class SwarmNode:
         while 1:
             report = self.report_queue.get()
             self.logger.info('New report from {}: {}'.format(report['bot'], report))
-            client = self.cartography['messages'].pop(report['id'])
             self.api.send_message(client, json.dumps(report))
+            if 'exception_notif' in report.keys():
+                # A component of a bot died, kill the rest of it
+                self.kill_commander(report['bot_name'])
+            else:
+                # Business as usual
+                client = self.cartography['messages'].pop(report['id'])
 
     def spawn_commander(self, bot_name):
         bot_profile = strategies.support_functions.get_profile(bot_name)
@@ -155,6 +160,10 @@ class SwarmNode:
         self.cartography[bot_name].update({'strategies_queue': queue.Queue()})
         self.cartography[bot_name].update({'thread': Thread(target=Commander, args=(bot_profile, self.cartography[bot_name]['strategies_queue'], self.report_queue, self.assets))})
         self.cartography[bot_name]['thread'].start()
+
+    def kill_commander(self, bot_name):
+        self.cartography[bot_name]['strategies_queue'].put(({'stop': 'die'}, ))
+        del self.cartography[bot_name]
 
 
 if __name__ == '__main__':

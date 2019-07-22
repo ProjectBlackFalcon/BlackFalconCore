@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 from random import randint
 
 import socket
@@ -34,7 +35,7 @@ class Commander:
         time.sleep(5)
         self.logger.info('Starting listener')
         self.listener = Listener(self.bot, self.assets)
-        self.listener_thread = Thread(target=self.listener.run)
+        self.listener_thread = Thread(target=self.listener_bootstrapper)
         self.listener_thread.start()
         self.logger.info('Starting connector')
         self.orders_queue = queue.Queue()
@@ -47,15 +48,38 @@ class Commander:
     def run(self):
         while 1:
             strategy = self.strategies_queue.get()
-            self.logger.info('Received strategy from swarm node: {}'.format(strategy))
-            self.execute_strategy(strategy)
+            if 'stop' in strategy.keys():
+                # Kill the commander
+                break
+            else:
+                # Business as usual
+                self.logger.info('Received strategy from swarm node: {}'.format(strategy))
+                self.execute_strategy(strategy)
+
+    def listener_bootstrapper(self):
+        try:
+            self.listener.run()
+        except Exception:
+            report = {
+                'exception_notif': 'listener',
+                'traceback': traceback.format_exc(),
+                'bot_name': self.bot['name']
+            }
+            self.reports_queue.put((report,))
 
     def execute_strategy(self, strategy):
         kwargs = {'strategy': strategy, 'listener': self.listener, 'orders_queue': self.orders_queue, 'assets': self.assets}
         report = strategy
         if hasattr(strategies, strategy['command']) and hasattr(getattr(strategies, strategy['command']), strategy['command']):
             self.logger.info('Starting executor for strategy: {}'.format(strategy))
-            report = getattr(getattr(strategies, strategy['command']), strategy['command'])(**kwargs)
+            try:
+                report = getattr(getattr(strategies, strategy['command']), strategy['command'])(**kwargs)
+            except Exception:
+                report['report'] = {
+                    'exception_notif': strategy,
+                    'traceback': traceback.format_exc(),
+                    'bot_name': self.bot['name']
+                }
         else:
             self.logger.warn('No known strategy named \'{}\''.format(strategy['command']))
             report['report'] = {
@@ -86,7 +110,6 @@ class Commander:
         while 1:
             time.sleep(0.1)
             if self.listener.game_state['file_request_message']['timestamp'] != last_file_request_message:
-                print('##################################')
                 last_file_request_message = self.listener.game_state['file_request_message']['timestamp']
 
                 file_name_hash = hashlib.md5(self.listener.game_state['file_request_message']['filename'].encode('utf-8')).hexdigest()

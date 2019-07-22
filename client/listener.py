@@ -36,7 +36,8 @@ class Listener:
             'map_players': [],
             'map_elements': [],
             'stated_elements': [],
-            'file_request_message': {'timestamp': 0}
+            'file_request_message': {'timestamp': 0},
+            'auction_house_info': [],
         }
         self.game_state = json.loads(json.dumps(self._game_state))
         self.messages_queue = []
@@ -78,7 +79,7 @@ class Listener:
 
             if data['message'] == 'InventoryContentMessage':
                 self._game_state['kamas'] = data['content']['kamas']
-                self._game_state['inventory'] = data['content']['objects']  # TODO: formatting
+                self._game_state['inventory'] = data['content']['objects']
 
             if data['message'] == 'InventoryWeightMessage':
                 self._game_state['weight'] = data['content']['inventoryWeight']
@@ -134,7 +135,6 @@ class Listener:
                     for element in data['content']['statedElements']:
                         if element['onCurrentMap']:
                             self._game_state['stated_elements'].append(element)
-                            print('##########' + str(element))
 
                 # Update positions in Mongo profile
                 Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'position', tuple(self._game_state['pos']))).start()
@@ -191,6 +191,7 @@ class Listener:
             if data['message'] == 'ExchangeLeaveMessage':
                 self._game_state['storage_open'] = False
                 self._game_state['storage_content'] = []
+                self._game_state['auction_house_info'] = []
 
             if data['message'] == 'InteractiveUsedMessage':
                 self._game_state['harvest_started'] = True
@@ -266,8 +267,14 @@ class Listener:
                             del self._game_state['storage_content']['objects'][index]
                             break
 
-    def received_message(self, start_time, message_id):
-        for message in self.messages_queue:
-            if start_time < message[0] and message_id == message[1]['id']:
-                return True
-        return False
+            if data['message'] == 'ExchangeStartedBidBuyerMessage':
+                self._game_state['auction_house_info'] = data['content']  # What the player can buy
+                self._game_state['auction_house_mode'] = 'buy'
+
+            if data['message'] == 'ExchangeStartedBidSellerMessage':
+                self._game_state['auction_house_info'] = data['content']  # What the player can sell
+                self._game_state['auction_house_mode'] = 'sell'
+
+            if data['message'] == 'ExchangeTypesExchangerDescriptionForUserMessage':
+                pass
+                # TODO: available items
