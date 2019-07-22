@@ -52,8 +52,8 @@ class Listener:
             self.messages_queue = self.messages_queue[1:] if len(self.messages_queue) > 100 else self.messages_queue
             self.update_game_state(data)
             self.game_state = json.loads(json.dumps(self._game_state))
-        logger.close_logger(self.logger)
         self.logger.info('Listener shut down')
+        logger.close_logger(self.logger)
 
     def update_game_state(self, data):
         if 'message' in data.keys():
@@ -104,6 +104,7 @@ class Listener:
 
             if data['message'] == 'CharacterLoadingCompleteMessage':
                 self._game_state['connected'] = True
+                Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'connected', True)).start()
 
             if data['message'] in ['MapComplementaryInformationsDataMessage', 'MapComplementaryInformationsDataInHavenBagMessage']:
                 if data['message'] == 'MapComplementaryInformationsDataInHavenBagMessage':

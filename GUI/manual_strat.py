@@ -160,11 +160,14 @@ def execute_strat(form):
 
 def check_result(success_label):
     report = json.loads(reports[bot_name.get()].get()[0])
-    if report['report']['success']:
+    if 'report' in report.keys() and report['report']['success']:
         success_label['text'] = 'Success'
         success_label['fg'] = 'green'
-    else:
+    elif 'report' in report.keys() and report['report']['success']:
         success_label['text'] = 'Failed'
+        success_label['fg'] = 'red'
+    else:
+        success_label['text'] = 'Crashed'
         success_label['fg'] = 'red'
 
 

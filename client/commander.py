@@ -2,14 +2,10 @@ import json
 import os
 import traceback
 from random import randint
-
 import socket
-
 import queue
 from threading import Thread
-
 from subprocess import Popen, PIPE
-
 import time
 
 from tools.ws_connector import Connection
@@ -54,6 +50,7 @@ class Commander:
                 self.logger.info('Shutting down...')
                 self.listener.stop = True
                 self.orders_queue.put((json.dumps({'command': 'conn_shutdown'}), ))
+                Thread(target=strategies.support_functions.update_profile, args=(self.bot['name'], 'connected', False)).start()
                 logger.close_logger(self.logger)
                 break
             else:

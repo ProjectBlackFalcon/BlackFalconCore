@@ -55,7 +55,7 @@ def disconnect(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    logger.info('Disonnected {} in {}s'.format(strategy['bot'], execution_time))
+    logger.info('Disconnected {} in {}s'.format(strategy['bot'], execution_time))
     strategy['report'] = {
         'success': True,
         'details': {'Execution time': execution_time}
