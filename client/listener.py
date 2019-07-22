@@ -14,6 +14,7 @@ class Listener:
 
         :param bot: the bot dict.
         """
+        self.stop = False
         self.assets = assets
         self.logger = logger.get_logger(__name__, bot['name'])
         self.output_queue = Queue()
@@ -44,13 +45,15 @@ class Listener:
 
     def run(self):
         self.logger.info('Starting listening for game state changes')
-        while 1:
+        while not self.stop:
             data = json.loads(self.output_queue.get()[0])
             # self.logger.info('Listener received {}'.format(data))
             self.messages_queue.append((time.time(), data))
             self.messages_queue = self.messages_queue[1:] if len(self.messages_queue) > 100 else self.messages_queue
             self.update_game_state(data)
             self.game_state = json.loads(json.dumps(self._game_state))
+        logger.close_logger(self.logger)
+        self.logger.info('Listener shut down')
 
     def update_game_state(self, data):
         if 'message' in data.keys():

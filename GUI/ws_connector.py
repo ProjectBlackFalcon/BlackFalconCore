@@ -9,6 +9,7 @@ import logger
 
 class Connection:
     def __init__(self, host, port, orders_queue, output_queue, bot=None):
+        self.stop = False
         self.host = host
         self.port = port
         self.logger = logger.get_logger(__name__, 'Connection-{}-{}'.format(host, port) if bot is None else bot['name'])
@@ -36,23 +37,19 @@ class Connection:
 
         def run(queue):
             while 1:
+                shutdown = False
                 for order in queue.get():
+                    if json.loads(order)['command'] == 'conn_shutdown':
+                        shutdown = True
                     self.logger.info('Sending order: ' + str(order))
                     self.connection.send(str(order).encode('utf8'))
-        self.thread = Thread(target=run, args=(self.orders_queue, ))
-        self.thread.start()
+                if shutdown:
+                    break
+            self.logger.info('Websocket connection shutting down')
+            self.connection.close()
+
+        Thread(target=run, args=(self.orders_queue, )).start()
 
 
 if __name__ == '__main__':
     pass
-    # orders = queue.Queue()
-    # t = Thread(target=Connection, args=('89.234.181.110', 8721, orders, queue.Queue()))
-    # t.start()
-    # 
-    # strategy = {
-    #       "bot": "Mystinu",
-    #       "command": "connect"
-    #     }
-    # orders.put((json.dumps(strategy),))
-
-

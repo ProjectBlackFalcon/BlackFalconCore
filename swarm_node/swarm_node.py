@@ -128,7 +128,7 @@ class SwarmNode:
         if message['bot'] not in self.cartography.keys():
             self.logger.info('Bot is not running. Starting commander for {}'.format(message['bot']))
             try:
-                self.spawn_commander(json.loads(json.dumps(message['bot'])))
+                self.spawn_commander(json.loads(json.dumps(message['bot'])), client)
             except Exception as e:
                 if e.args[0] == 'Bot does not exist. Create a profile using the \'new_bot\' command first.':
                     message['success'] = False
@@ -145,24 +145,29 @@ class SwarmNode:
     def reports_listener(self):
         while 1:
             report = self.report_queue.get()
-            self.logger.info('New report from {}: {}'.format(report['bot'], report))
-            self.api.send_message(client, json.dumps(report))
             if 'exception_notif' in report.keys():
                 # A component of a bot died, kill the rest of it
-                self.kill_commander(report['bot_name'])
+                client = self.cartography[report['bot']]['client']
+                self.kill_commander(report['bot'])
             else:
                 # Business as usual
                 client = self.cartography['messages'].pop(report['id'])
 
-    def spawn_commander(self, bot_name):
+            self.api.send_message(client, json.dumps(report))
+            self.logger.info('New report from {}: {}'.format(report['bot'], report))
+
+    def spawn_commander(self, bot_name, client):
+        if bot_name in self.cartography.keys():
+            raise Exception('{} is already used elsewhere'.format(bot_name))
         bot_profile = strategies.support_functions.get_profile(bot_name)
         self.cartography[bot_name] = {}
         self.cartography[bot_name].update({'strategies_queue': queue.Queue()})
         self.cartography[bot_name].update({'thread': Thread(target=Commander, args=(bot_profile, self.cartography[bot_name]['strategies_queue'], self.report_queue, self.assets))})
         self.cartography[bot_name]['thread'].start()
+        self.cartography[bot_name]['client'] = client
 
     def kill_commander(self, bot_name):
-        self.cartography[bot_name]['strategies_queue'].put(({'stop': 'die'}, ))
+        self.cartography[bot_name]['strategies_queue'].put({'stop': 'die'})
         del self.cartography[bot_name]
 
 

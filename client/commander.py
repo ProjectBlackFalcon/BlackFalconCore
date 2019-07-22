@@ -44,12 +44,17 @@ class Commander:
         self.logger.info('New commander spawned for {}'.format(self.bot['name']))
         Thread(target=self.interrupts).start()
         self.run()
+        self.logger.info('Commander shut down')
 
     def run(self):
         while 1:
             strategy = self.strategies_queue.get()
             if 'stop' in strategy.keys():
                 # Kill the commander
+                self.logger.info('Shutting down...')
+                self.listener.stop = True
+                self.orders_queue.put((json.dumps({'command': 'conn_shutdown'}), ))
+                logger.close_logger(self.logger)
                 break
             else:
                 # Business as usual
@@ -63,7 +68,7 @@ class Commander:
             report = {
                 'exception_notif': 'listener',
                 'traceback': traceback.format_exc(),
-                'bot_name': self.bot['name']
+                'bot': self.bot['name']
             }
             self.reports_queue.put((report,))
 
@@ -75,11 +80,12 @@ class Commander:
             try:
                 report = getattr(getattr(strategies, strategy['command']), strategy['command'])(**kwargs)
             except Exception:
-                report['report'] = {
-                    'exception_notif': strategy,
+                self.logger.error('Executor for {} crashed'.format(strategy))
+                report.update({
+                    'exception_notif': 'Strategy',
                     'traceback': traceback.format_exc(),
-                    'bot_name': self.bot['name']
-                }
+                    'bot': self.bot['name']
+                })
         else:
             self.logger.warn('No known strategy named \'{}\''.format(strategy['command']))
             report['report'] = {
@@ -89,10 +95,6 @@ class Commander:
 
         self.logger.info('Sending back report to swarm node: {}'.format(report))
         self.reports_queue.put(report)
-
-    def send_order(self, order):
-        self.logger.info('Sending order to bot API: {}'.format(order))
-        self.orders_queue.put((order, ))
 
     def try_port(self, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
