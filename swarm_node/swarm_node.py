@@ -1,7 +1,9 @@
+import datetime
 import json
 import os
 import queue
 import time
+import traceback
 import uuid
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
@@ -14,7 +16,9 @@ from strategies import support_functions
 from strategies import *
 from client.commander import Commander
 from tools import logger
+from tools.discord_bot import DiscordMessageSender
 import assets_downloader
+from credentials import credentials
 
 
 class SwarmNode:
@@ -76,6 +80,7 @@ class SwarmNode:
                         elif type(asset_chunk) is dict:
                             self.assets[asset_name].update(asset_chunk)
         self.logger.info('Done loading assets in {}s'.format(round(time.time() - start, 2)))
+        raise Exception('Test crash for swarm node')
 
     def load_asset_chunk(self, file_path):
         with open(file_path, 'r', encoding='utf8') as f:
@@ -171,7 +176,12 @@ class SwarmNode:
         del self.cartography[bot_name]
 
 
+def swarm_node_bootstrapper():
+    try:
+        swarm_node = SwarmNode(host='0.0.0.0')
+    except Exception:
+        DiscordMessageSender(f'[{datetime.datetime.fromtimestamp(time.time())}] Swarm node crashed \n`{traceback.format_exc()}`').run(credentials['discord']['token'])
+
+
 if __name__ == '__main__':
-    swarm_node = SwarmNode(host='0.0.0.0')
-    # swarm_node.spawn_commander(bot={'id': 0, 'name': 'Ilancelet', 'username': '?', 'password': '?', 'server': 'Julith'})
-    time.sleep(5)
+    swarm_node_bootstrapper()
