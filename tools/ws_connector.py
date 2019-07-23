@@ -9,7 +9,7 @@ from tools import logger
 
 class Connection:
     def __init__(self, host, port, orders_queue, output_queue, bot=None):
-        self.stop = False
+        self.stop = [False]
         self.host = host
         self.port = port
         self.logger = logger.get_logger(__name__, 'Connection-{}-{}'.format(host, port) if bot is None else bot['name'])
@@ -29,21 +29,25 @@ class Connection:
         self.logger.error(error)
 
     def on_close(self):
-        self.logger.info("Websocket at {} closed".format(self.connection_string))
-        logger.close_logger(self.logger)
+        if self.stop == [True]:
+            self.logger.info("Websocket at {} closed successfully".format(self.connection_string))
+            logger.close_logger(self.logger)
+        else:
+            self.logger.error("Websocket at {} closed unexpectedly".format(self.connection_string))
+            logger.close_logger(self.logger)
+            raise Exception("Websocket at {} closed unexpectedly".format(self.connection_string))
 
     def on_open(self):
         self.logger.info('Connection established to websocket at ' + self.connection_string + ', ready to send orders')
 
         def run(queue):
             while 1:
-                shutdown = False
                 for order in queue.get():
                     if json.loads(order)['command'] == 'conn_shutdown':
-                        shutdown = True
+                        self.stop = [True]  # Using a mutable so it carries its value outside the thread
                     self.logger.info('Sending order: ' + str(order))
                     self.connection.send(str(order).encode('utf8'))
-                if shutdown:
+                if self.stop == [True]:
                     break
             self.logger.info('Websocket connection shutting down')
             self.connection.close()

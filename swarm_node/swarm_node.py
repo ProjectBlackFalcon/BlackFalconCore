@@ -80,7 +80,6 @@ class SwarmNode:
                         elif type(asset_chunk) is dict:
                             self.assets[asset_name].update(asset_chunk)
         self.logger.info('Done loading assets in {}s'.format(round(time.time() - start, 2)))
-        raise Exception('Test crash for swarm node')
 
     def load_asset_chunk(self, file_path):
         with open(file_path, 'r', encoding='utf8') as f:
@@ -150,6 +149,7 @@ class SwarmNode:
     def reports_listener(self):
         while 1:
             report = self.report_queue.get()
+            self.logger.info('New report from {}: {}'.format(report['bot'], report))
             if 'exception_notif' in report.keys():
                 # A component of a bot died, kill the rest of it
                 client = self.cartography[report['bot']]['client']
@@ -159,7 +159,6 @@ class SwarmNode:
                 client = self.cartography['messages'].pop(report['id'])
 
             self.api.send_message(client, json.dumps(report))
-            self.logger.info('New report from {}: {}'.format(report['bot'], report))
 
     def spawn_commander(self, bot_name, client):
         if bot_name in self.cartography.keys():

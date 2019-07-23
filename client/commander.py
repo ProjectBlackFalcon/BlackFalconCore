@@ -35,7 +35,8 @@ class Commander:
         self.listener_thread.start()
         self.logger.info('Starting connector')
         self.orders_queue = queue.Queue()
-        self.connection = Thread(target=Connection, args=('localhost', self.port, self.orders_queue, self.listener.output_queue, self.bot))
+        self.connection_crashed = [False]
+        self.connection = Thread(target=self.connection_bootstrapper)
         self.connection.start()
         self.logger.info('New commander spawned for {}'.format(self.bot['name']))
         Thread(target=self.interrupts).start()
@@ -48,8 +49,15 @@ class Commander:
             if 'stop' in strategy.keys():
                 # Kill the commander
                 self.logger.info('Shutting down...')
+
+                # Stop the listener
+                self.logger.info('Shutting down listener')
                 self.listener.stop = True
+
+                # Stop the connector
+                self.logger.info('Shutting down connector')
                 self.orders_queue.put((json.dumps({'command': 'conn_shutdown'}), ))
+
                 Thread(target=strategies.support_functions.update_profile, args=(self.bot['name'], 'connected', False)).start()
                 logger.close_logger(self.logger)
                 break
@@ -64,6 +72,18 @@ class Commander:
         except Exception:
             report = {
                 'exception_notif': 'listener',
+                'traceback': traceback.format_exc(),
+                'bot': self.bot['name']
+            }
+            self.reports_queue.put((report,))
+
+    def connection_bootstrapper(self):
+        try:
+            Connection('localhost', self.port, self.orders_queue, self.listener.output_queue, self.bot)
+        except:
+            print('################' + 'Connection creashed')
+            report = {
+                'exception_notif': 'connection',
                 'traceback': traceback.format_exc(),
                 'bot': self.bot['name']
             }
