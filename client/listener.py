@@ -24,6 +24,7 @@ class Listener:
             'username': bot['username'],
             'password': bot['password'],
             'server': bot['server'],
+            'api_outdated': False,
             'npc_dialog_open': False,
             'npc_current_question': None,
             'npc_possible_replies': None,
@@ -105,6 +106,9 @@ class Listener:
             if data['message'] == 'CharacterLoadingCompleteMessage':
                 self._game_state['connected'] = True
                 Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'connected', True)).start()
+
+            if data['message'] == 'IdentificationFailedForBadVersionMessage':
+                self._game_state['api_outdated'] = True
 
             if data['message'] in ['MapComplementaryInformationsDataMessage', 'MapComplementaryInformationsDataInHavenBagMessage']:
                 if data['message'] == 'MapComplementaryInformationsDataInHavenBagMessage':

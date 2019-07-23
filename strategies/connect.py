@@ -47,7 +47,7 @@ def connect(**kwargs):
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'connected' in listener.game_state.keys():
-            if listener.game_state['connected']:
+            if listener.game_state['connected'] or listener.game_state['api_outdated']:
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
@@ -57,6 +57,15 @@ def connect(**kwargs):
         strategy['report'] = {
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Timeout'}
+        }
+        log.close_logger(logger)
+        return strategy
+
+    if listener.game_state['api_outdated']:
+        logger.warn('Your BlackFalconAPI is outdated. Try to get the latest one or contact the BlackFalcon team if you already have the latest version')
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': execution_time, 'Reason': 'Your BlackFalconAPI is outdated. Try to get the latest one or contact the BlackFalcon team if you already have the latest version'}
         }
         log.close_logger(logger)
         return strategy
