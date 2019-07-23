@@ -14,9 +14,9 @@ def get_logger(file_name, bot_name):
     """
     logger = logging.getLogger(file_name)
     logger.setLevel(logging.DEBUG)
-    if 'logs' not in os.listdir('../assets/'):
-        os.makedirs('../assets/logs/')
-    handler = RotatingFileHandler("../assets/logs/{}.log".format(bot_name), maxBytes=10000000)
+    if 'logs' not in os.listdir(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets'))):
+        os.makedirs(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets', 'logs')))
+    handler = RotatingFileHandler(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets', 'logs', '{}.log'.format(bot_name))), maxBytes=10000000)
     formatter = logging.Formatter('%(asctime)s [%(created).0f]   %(levelname)s - %(name)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)

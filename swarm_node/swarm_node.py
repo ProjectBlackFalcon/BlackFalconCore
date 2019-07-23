@@ -1,6 +1,8 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import datetime
 import json
-import os
 import queue
 import time
 import traceback
@@ -37,6 +39,7 @@ class SwarmNode:
         self.reports_thread = Thread(target=self.reports_listener)
         self.reports_thread.start()
         self.cartography = {'messages': {}}
+        # TODO: make the clients log in
 
     def load_assets(self):
         start = time.time()
@@ -177,10 +180,13 @@ class SwarmNode:
 
 def swarm_node_bootstrapper():
     try:
-        swarm_node = SwarmNode(host='0.0.0.0')
+        SwarmNode(host='0.0.0.0')
     except Exception:
         DiscordMessageSender(f'[{datetime.datetime.fromtimestamp(time.time())}] Swarm node crashed \n`{traceback.format_exc()}`').run(credentials['discord']['token'])
+        raise
 
 
 if __name__ == '__main__':
+    if sys.version_info.major != 3 or sys.version_info.minor < 7:
+        raise Exception('Must be ran with python 3.7 or above')
     swarm_node_bootstrapper()
