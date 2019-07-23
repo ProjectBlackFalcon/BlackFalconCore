@@ -30,6 +30,7 @@ class Commander:
         Popen(' '.join(args), shell=True)
         time.sleep(5)
         self.logger.info('Starting listener')
+        self.listener_crashed = [False]
         self.listener = Listener(self.bot, self.assets)
         self.listener_thread = Thread(target=self.listener_bootstrapper)
         self.listener_thread.start()
@@ -48,15 +49,16 @@ class Commander:
             strategy = self.strategies_queue.get()
             if 'stop' in strategy.keys():
                 # Kill the commander
-                self.logger.info('Shutting down...')
 
                 # Stop the listener
-                self.logger.info('Shutting down listener')
-                self.listener.stop = True
+                if not self.listener_crashed[0]:
+                    self.logger.info('Shutting down listener')
+                    self.listener.stop = True
 
                 # Stop the connector
-                self.logger.info('Shutting down connector')
-                self.orders_queue.put((json.dumps({'command': 'conn_shutdown'}), ))
+                if not self.connection_crashed[0]:
+                    self.logger.info('Shutting down connector')
+                    self.orders_queue.put((json.dumps({'command': 'conn_shutdown'}), ))
 
                 Thread(target=strategies.support_functions.update_profile, args=(self.bot['name'], 'connected', False)).start()
                 logger.close_logger(self.logger)
@@ -70,24 +72,27 @@ class Commander:
         try:
             self.listener.run()
         except Exception:
+            self.logger.info(traceback.format_exc())
             report = {
                 'exception_notif': 'listener',
                 'traceback': traceback.format_exc(),
                 'bot': self.bot['name']
             }
-            self.reports_queue.put((report,))
+            self.listener_crashed = [True]
+            self.reports_queue.put(report)
 
     def connection_bootstrapper(self):
         try:
             Connection('localhost', self.port, self.orders_queue, self.listener.output_queue, self.bot)
-        except:
-            print('################' + 'Connection creashed')
+        except Exception:
+            self.logger.info(traceback.format_exc())
             report = {
                 'exception_notif': 'connection',
                 'traceback': traceback.format_exc(),
                 'bot': self.bot['name']
             }
-            self.reports_queue.put((report,))
+            self.connection_crashed = [True]
+            self.reports_queue.put(report)
 
     def execute_strategy(self, strategy):
         kwargs = {'strategy': strategy, 'listener': self.listener, 'orders_queue': self.orders_queue, 'assets': self.assets}

@@ -17,9 +17,10 @@ class Connection:
         self.output_queue = output_queue
         self.connection_string = 'ws://{}:{}'.format(host, port)
         self.logger.info('Connecting to websocket at: ' + self.connection_string)
-        self.connection = websocket.WebSocketApp(self.connection_string, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
-        self.connection.on_open = self.on_open
+        self.connection = websocket.WebSocketApp(self.connection_string, on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
         self.connection.run_forever()
+        if not self.stop[0]:
+            raise Exception("Websocket at {} closed unexpectedly".format(self.connection_string))
 
     def on_message(self, message):
         self.logger.info('Recieved message from API: ' + message)
@@ -29,13 +30,12 @@ class Connection:
         self.logger.error(error)
 
     def on_close(self):
-        if self.stop == [True]:
+        if self.stop[0]:
             self.logger.info("Websocket at {} closed successfully".format(self.connection_string))
             logger.close_logger(self.logger)
         else:
             self.logger.error("Websocket at {} closed unexpectedly".format(self.connection_string))
             logger.close_logger(self.logger)
-            raise Exception("Websocket at {} closed unexpectedly".format(self.connection_string))
 
     def on_open(self):
         self.logger.info('Connection established to websocket at ' + self.connection_string + ', ready to send orders')
