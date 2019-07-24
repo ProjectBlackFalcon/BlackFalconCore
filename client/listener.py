@@ -24,6 +24,7 @@ class Listener:
             'username': bot['username'],
             'password': bot['password'],
             'server': bot['server'],
+            'connected': False,
             'api_outdated': False,
             'npc_dialog_open': False,
             'npc_current_question': None,

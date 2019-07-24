@@ -46,7 +46,7 @@ def connect(**kwargs):
     timeout = 40 if 'timeout' not in strategy.keys() else strategy['timeout']
     waiting = True
     while waiting and time.time() - start < timeout:
-        if 'connected' in listener.game_state.keys():
+        if 'connected' in listener.game_state.keys() and 'api_outdated' in listener.game_state.keys():
             if listener.game_state['connected'] or listener.game_state['api_outdated']:
                 waiting = False
         time.sleep(0.05)
