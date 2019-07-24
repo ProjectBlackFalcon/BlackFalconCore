@@ -1,5 +1,6 @@
 import ast
 import json
+import math
 import os
 import pymongo
 
@@ -171,6 +172,40 @@ def check_result(success_label):
         success_label['fg'] = 'red'
 
 
+def trfm(x, y):
+    x = x - 34 / 2
+    y = y - 34 / 2
+
+    tmp_x, tmp_y = x, y
+    x = tmp_x * math.cos(math.pi / 4) - tmp_y * math.sin(math.pi / 4)
+    y = tmp_x * math.sin(math.pi / 4) + tmp_y * math.cos(math.pi / 4)
+
+    x = x * 2
+    y = y
+
+    x = (x + 40 / 2) * 10
+    y = (y + 30 / 2) * 10
+
+    return x, y
+
+
+def itrfm(x, y):
+    x = x / 10 - 40 / 2
+    y = y / 10 - 30 / 2
+
+    x = x / 2
+    y = y
+
+    tmp_x, tmp_y = x, y
+    x = round(tmp_x * math.cos(-math.pi / 4) - tmp_y * math.sin(-math.pi / 4))
+    y = round(tmp_x * math.sin(-math.pi / 4) + tmp_y * math.cos(-math.pi / 4))
+
+    x = round(x + 34 / 2)
+    y = round(y + 34 / 2)
+
+    return x, y
+
+
 def get_pos_info():
     client = pymongo.MongoClient(
         host=credentials['mongo']['host'],
@@ -189,22 +224,21 @@ def get_pos_info():
             pos_info_2['text'] = str(profile['worldmap']) + ' | ' + str(profile['cell'])
             map_data = fetch_map(f'{profile["position"][0]};{profile["position"][1]}', profile['worldmap'])
             canvas.delete("all")
-            canvas.create_rectangle(0, 0, 340, 330, fill="light grey")
+            canvas.create_rectangle(0, 0, 410, 290, fill="light grey")
             if map_data is not None:
                 map = cells_2_map(map_data['cells'])
-
                 for y in range(len(map)):
                     for x in range(len(map[y])):
                         if map[y, x] == 0:
-                            canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='white')
+                            canvas.create_polygon(trfm(x, y), trfm((x + 1), y), trfm((x + 1), (y + 1)), trfm(x, (y + 1)), fill='white')
                         if map[y, x] == 2:
-                            canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='dark grey')
+                            canvas.create_polygon(trfm(x, y), trfm((x + 1), y), trfm((x + 1), (y + 1)), trfm(x, (y + 1)), fill='dark grey')
                         if map[y, x] == 1:
-                            canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='grey')
+                            canvas.create_polygon(trfm(x, y), trfm((x + 1), y), trfm((x + 1), (y + 1)), trfm(x, (y + 1)), fill='grey')
                         if map[y, x] >= 3:
-                            canvas.create_rectangle(x * 10, y * 10, (x + 1) * 10, (y + 1) * 10, fill='light green')
-                bot_pos = (14 - 1 - profile['cell'] % 14 + int((profile['cell'] // 14) / 2)), profile['cell'] % 14 + int((profile['cell'] // 14) / 2 + 0.5)
-                canvas.create_rectangle(bot_pos[1] * 10, bot_pos[0] * 10, (bot_pos[1] + 1) * 10, (bot_pos[0] + 1) * 10, fill='red')
+                            canvas.create_polygon(trfm(x, y), trfm((x + 1), y), trfm((x + 1), (y + 1)), trfm(x, (y + 1)), fill='light green')
+                y, x = (14 - 1 - profile['cell'] % 14 + int((profile['cell'] // 14) / 2)), profile['cell'] % 14 + int((profile['cell'] // 14) / 2 + 0.5)
+                canvas.create_polygon(trfm(x, y), trfm((x + 1), y), trfm((x + 1), (y + 1)), trfm(x, (y + 1)), fill='red')
             previous_profile = profile
             time.sleep(0.5)
         time.sleep(0.5)
@@ -224,7 +258,8 @@ def login(orders, reports):
 
 
 def moved(event):
-    canvas_coords['text'] = f'Coords: {event.x // 10}, {event.y // 10} | Cell : {coord_2_cell(event.x // 10, event.y // 10)}'
+    x, y = itrfm(event.x, event.y - 290 / 40)
+    canvas_coords['text'] = f'Coords: {x}, {y} | Cell : {coord_2_cell(x, y)}'
 
 
 map_info = load_map_info()
@@ -272,12 +307,12 @@ selected_strat.trace('w', pick_dropdown)
 form_frame = Frame(tk)
 form_frame.grid(row=2, column=1)
 
-canvas = Canvas(tk, width=340, height=330)
+canvas = Canvas(tk, width=410, height=290)
 canvas_coords = Label(tk, text='')
 canvas_coords.grid(row=2, column=2)
 canvas.grid(row=0, rowspan=2, column=2)
 canvas.bind("<Motion>", moved)
-canvas.create_rectangle(0, 0, 340, 330, fill="light grey")
+canvas.create_rectangle(0, 0, 410, 290, fill="light grey")
 
 Thread(target=get_pos_info).start()
 
