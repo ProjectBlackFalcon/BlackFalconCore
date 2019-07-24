@@ -227,7 +227,7 @@ Should send the `ExchangeBidHouseListMessage` AND the `ExchangeBidHousePriceMess
 ````
 Should also send the `ExchangeBidHousePriceMessage`
 
-### Buy item
+### Sell item
 ````json
 {
   "command": "auctionh_sell_item",
