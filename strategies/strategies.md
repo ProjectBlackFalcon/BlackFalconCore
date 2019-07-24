@@ -4,6 +4,15 @@ These are the messages exchanged from the Swarm Manager to the commander.
 
 For the orders exchanged between the commander and the low level API, see the orders.md in the strategies folder.
 
+### Login
+````json
+{
+  "command": "login",
+  "parameters": {
+    "token": "d5s6f6ds5f4s654fds654f6s5q4df"
+  }
+}
+````
 
 ### Add bot
 ````json

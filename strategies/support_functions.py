@@ -1,4 +1,6 @@
 import json
+import uuid
+
 import numpy as np
 from heapq import *
 import time
@@ -351,6 +353,41 @@ def get_path(map_info, graph, start_pos: tuple, end_pos: tuple, start_cell=None,
     return best_path
 
 
+def generate_token(valid_until, description):
+    """
+    generated a token to access the swarm node
+
+    :param valid_until: timestamp in seconds since 01/01/1970
+    :param description: A description of whet the token is used for
+    :return: token
+    """
+    token = str(uuid.uuid4())
+    client = mongo_client()
+    client.blackfalcon.tokens.insert_one({'token': token, 'valid_until': valid_until, 'description': description})
+    return token
+
+
+def delete_token(token):
+    client = mongo_client()
+    client.blackfalcon.tokens.delete_one({'token': token})
+
+
+def token_is_authorized(token):
+    """
+    Used to control access to the swarm node
+    :param token: a token provided in the credentials.py
+    :return: bool
+    """
+    client = mongo_client()
+    token_data = client.blackfalcon.tokens.find_one({'token': token})
+    if token_data is None:
+        return False
+    if token_data['valid_until'] < time.time():
+        delete_token(token)
+        return False
+    return token_data['valid_until']
+
+
 if __name__ == '__main__':
     # mapinfo = []
     # for i in range(8):
@@ -363,4 +400,8 @@ if __name__ == '__main__':
     #
     # print('Starting')
     # print(get_path(mapinfo, graph, (4, -18), (3, -5)))
-    print(get_known_zaaps('Mystinu'))
+    client = mongo_client()
+    print([thing for thing in client.blackfalcon.tokens.find({})])
+    token = generate_token(time.time() + 90, 'Test token')
+    print(token)
+    print(token_is_authorized(token))

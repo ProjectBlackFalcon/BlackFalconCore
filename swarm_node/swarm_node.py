@@ -38,7 +38,10 @@ class SwarmNode:
         self.report_queue = queue.Queue()
         self.reports_thread = Thread(target=self.reports_listener)
         self.reports_thread.start()
-        self.cartography = {'messages': {}}
+        self.cartography = {
+            'messages': {},
+            'authorized_clients': []
+        }
         # TODO: make the clients log in
 
     def load_assets(self):
@@ -94,10 +97,29 @@ class SwarmNode:
         message = json.loads(message)
         if 'id' not in message.keys():
             message['id'] = str(uuid.uuid4())
+
+        if 'command' in message.keys() and message['command'] != 'login':
+            new_authorized_clients = []
+            found = False
+            print(self.cartography['authorized_clients'])
+            print(client)
+            for authorized_client, valid_until in self.cartography['authorized_clients']:
+                if valid_until > time.time():
+                    new_authorized_clients.append((authorized_client, valid_until))
+                    if authorized_client == client:
+                        found = True
+            self.cartography['authorized_clients'] = new_authorized_clients
+            if not found:
+                self.logger.warning('Unauthorized client tried to connect')
+                message['success'] = False
+                message['details'] = {'reason': 'Unauthorized client'}
+                self.api.send_message(client, json.dumps(message))
+                return
+
         self.cartography['messages'][message['id']] = client
         intercept_command = False
 
-        if message['command'] == 'new_bot':
+        if 'command' in message.keys() and message['command'] == 'new_bot':
             intercept_command = True
             self.logger.info('Creating new bot : ' + str(message['parameters']))
             try:
@@ -122,17 +144,34 @@ class SwarmNode:
                     raise
                 return
 
-        if message['command'] == 'delete_bot':
+        if 'command' in message.keys() and message['command'] == 'delete_bot':
             strategies.support_functions.delete_profile(message['bot'])
             message['success'] = True
             message['details'] = {}
             if message['bot'] in self.cartography.keys():
-                # TODO: This is shit, implement a kill commander order or something.
-                del self.cartography[message['bot']]
+                self.kill_commander(message['bot'])
             self.api.send_message(client, json.dumps(message))
             return
 
-        if message['bot'] not in self.cartography.keys():
+        if 'command' in message.keys() and message['command'] == 'login':
+            if 'parameters' in message.keys() and 'token' in message['parameters'].keys():
+                valid_until = support_functions.token_is_authorized(message['parameters']['token'])
+                if valid_until:
+                    for authorized_client, _ in self.cartography['authorized_clients']:
+                        message['success'] = True
+                        if client == authorized_client:
+                            self.api.send_message(client, json.dumps(message))
+                            return
+                    self.cartography['authorized_clients'].append((client, valid_until))
+                    message['success'] = True
+                    self.api.send_message(client, json.dumps(message))
+                    return
+                else:
+                    message['success'] = False
+                    self.api.send_message(client, json.dumps(message))
+            return
+
+        if 'bot' in message.keys() and message['bot'] not in self.cartography.keys():
             self.logger.info('Bot is not running. Starting commander for {}'.format(message['bot']))
             try:
                 self.spawn_commander(json.loads(json.dumps(message['bot'])), client)

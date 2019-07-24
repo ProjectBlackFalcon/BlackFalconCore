@@ -163,7 +163,7 @@ def check_result(success_label):
     if 'report' in report.keys() and report['report']['success']:
         success_label['text'] = 'Success'
         success_label['fg'] = 'green'
-    elif 'report' in report.keys() and report['report']['success']:
+    elif 'report' in report.keys() and not report['report']['success']:
         success_label['text'] = 'Failed'
         success_label['fg'] = 'red'
     else:
@@ -215,6 +215,11 @@ def login(orders, reports):
     orders[bot_name.get()] = queue.Queue()
     reports[bot_name.get()] = queue.Queue()
     Thread(target=ws_connector.Connection, args=(address.get(), port.get(), orders[bot_name.get()], reports[bot_name.get()])).start()
+    token = credentials['swarm_node']['token']
+
+    fake_entry = Entry(tk)
+    fake_entry.insert(END, token)
+    execute_strat([[Label(form_frame, text='token'), fake_entry], 'login'])
     execute_strat(['connect'])
 
 
