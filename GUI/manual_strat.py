@@ -132,11 +132,7 @@ def pick_dropdown(*args):
     Button(form_frame, text='GO', command=lambda: execute_strat(form)).grid(row=len(form) + 1, column=1)
 
 
-def execute_strat(form):
-    strategy = {
-        'bot': bot_name.get(),
-        'command': form[-1]
-    }
+def get_parameters(form):
     parameters = {}
     for field in form[:-1]:
         try:
@@ -150,8 +146,24 @@ def execute_strat(form):
                     parameters[field[0].cget('text')] = ast.literal_eval(field[1].get())
                 except:
                     parameters[field[0].cget('text')] = field[1].get()
-    strategy['parameters'] = parameters
+    return parameters
 
+def execute_strat(form):
+    global success_label
+    if type(form) is list:
+        strategy = {
+            'bot': bot_name.get(),
+            'command': form[-1]
+        }
+        parameters = get_parameters(form)
+        strategy['parameters'] = parameters
+    else:
+        strategy = form
+
+    try:
+        success_label.destroy()
+    except:
+        pass
     success_label = Label(form_frame, text='Pending...', fg='orange')
     success_label.grid(row=len(form) + 1, column=2)
 
@@ -207,12 +219,6 @@ def itrfm(x, y):
 
 
 def get_pos_info():
-    client = pymongo.MongoClient(
-        host=credentials['mongo']['host'],
-        port=credentials['mongo']['port'],
-        username=credentials['mongo']['username'],
-        password=credentials['mongo']['password'],
-    )
     previous_profile = None
     while 1:
         profile = client.blackfalcon.bots.find_one({'name': bot_name.get()})
@@ -258,8 +264,35 @@ def login(orders, reports):
 
 
 def moved(event):
+    global hover
     x, y = itrfm(event.x, event.y - 290 / 40)
     canvas_coords['text'] = f'Coords: {x}, {y} | Cell : {coord_2_cell(x, y)}'
+    canvas.delete(hover)
+    hover = canvas.create_polygon(trfm(x + .25, y + .25), trfm((x + .75), y + .25), trfm((x + .75), (y + .75)), trfm(x + .25, (y + .75)), fill='dark grey')
+
+
+def clicked(event):
+    x, y = itrfm(event.x, event.y - 290 / 40)
+
+    profile = client.blackfalcon.bots.find_one({'name': bot_name.get()})
+    map_data = fetch_map(f'{profile["position"][0]};{profile["position"][1]}', profile['worldmap'])
+    if map_data is not None:
+        map = cells_2_map(map_data['cells'])
+        if map[y, x] in [1, 2]:
+            return
+
+    target_cell = coord_2_cell(x, y)
+    strat = {
+        'bot': bot_name.get(),
+        'command': 'move',
+        'parameters': {
+            'cell': target_cell
+        }
+    }
+    execute_strat(strat)
+
+def leave(event):
+    canvas.delete(hover)
 
 
 map_info = load_map_info()
@@ -312,8 +345,17 @@ canvas_coords = Label(tk, text='')
 canvas_coords.grid(row=2, column=2)
 canvas.grid(row=0, rowspan=2, column=2)
 canvas.bind("<Motion>", moved)
+canvas.bind("<Button-1>", clicked)
+canvas.bind("<Leave>", leave)
 canvas.create_rectangle(0, 0, 410, 290, fill="light grey")
+hover = canvas.create_polygon(0, 0, 0, 0)
 
+client = pymongo.MongoClient(
+        host=credentials['mongo']['host'],
+        port=credentials['mongo']['port'],
+        username=credentials['mongo']['username'],
+        password=credentials['mongo']['password'],
+    )
 Thread(target=get_pos_info).start()
 
 tk.mainloop()
