@@ -278,18 +278,29 @@ def clicked(event):
     map_data = fetch_map(f'{profile["position"][0]};{profile["position"][1]}', profile['worldmap'])
     if map_data is not None:
         map = cells_2_map(map_data['cells'])
+        target_cell = coord_2_cell(x, y)
         if map[y, x] in [1, 2]:
             return
 
-    target_cell = coord_2_cell(x, y)
-    strat = {
-        'bot': bot_name.get(),
-        'command': 'move',
-        'parameters': {
-            'cell': target_cell
-        }
-    }
-    execute_strat(strat)
+        elif map[y, x] in [0, 4, 6, 8, 10]:
+            strat = {
+                'bot': bot_name.get(),
+                'command': 'move',
+                'parameters': {
+                    'cell': target_cell
+                }
+            }
+        else:
+            direction = ['n', 's', 'w', 'e'][[3, 7, 9, 5].index(map[y, x])]
+            strat = {
+                'bot': bot_name.get(),
+                'command': 'change_map',
+                'parameters': {
+                    'cell': target_cell,
+                    'direction': direction
+                }
+            }
+        execute_strat(strat)
 
 def leave(event):
     canvas.delete(hover)
