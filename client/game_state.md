@@ -136,7 +136,9 @@
          "maxItemPerAccount":20,
          "npcContextualId":-1,
          "unsoldDelay":672
-      }
+      },
+      "items_available": [7287,1336,16380,7903,2318,428],
+      "item_selected": [{"objectUID":85772,"effects":[],"prices":[30,399,2479]}]
    }
 }
 ````

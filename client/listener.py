@@ -285,5 +285,7 @@ class Listener:
                 self._game_state['auction_house_mode'] = 'sell'
 
             if data['message'] == 'ExchangeTypesExchangerDescriptionForUserMessage':
-                pass
-                # TODO: available items
+                self._game_state['auction_house_info']['items_available'] = data['content']['typeDescription']
+
+            if data['message'] == 'ExchangeTypesItemsExchangerDescriptionForUserMessage':
+                self._game_state['auction_house_info']['item_selected'] = data['content']['itemTypeDescriptions']
