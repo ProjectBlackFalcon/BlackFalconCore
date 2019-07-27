@@ -125,6 +125,16 @@ def harvest(**kwargs):
         log.close_logger(logger)
         return strategy
 
+    # TODO: remove this after fight is implemented
+    if bot_skill_level > 19:
+        logger.warn('Bot skill level too high')
+        strategy['report'] = {
+            'success': False,
+            'details': {'Reason': 'Bot skill level too high'}
+        }
+        log.close_logger(logger)
+        return strategy
+
     # Check if the player can reach the resource i.e. skill range >= manhattan distance between closest reachable cell and resource cell
     closest_reachable_cell = support_functions.get_closest_reachable_cell(assets['map_info'], resource_cell, listener.game_state['cell'], listener.game_state['pos'], listener.game_state['worldmap'])
     dist = sum([abs(a - b) for a, b in zip(support_functions.cell_2_coord(closest_reachable_cell), support_functions.cell_2_coord(resource_cell))])
