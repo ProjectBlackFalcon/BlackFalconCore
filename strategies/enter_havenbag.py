@@ -27,6 +27,15 @@ def enter_havenbag(**kwargs):
         log.close_logger(logger)
         return strategy
 
+    if listener.game_state['sub_end'] < time.time():
+        logger.warn('Bot not subscribed')
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': 0, 'Reason': 'Bot not subscribed'}
+        }
+        log.close_logger(logger)
+        return strategy
+
     if 'in_haven_bag' in listener.game_state.keys():
         if listener.game_state['in_haven_bag']:
             logger.info('Entered havenbag in {}s'.format(0))

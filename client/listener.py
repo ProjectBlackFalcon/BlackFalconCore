@@ -25,6 +25,7 @@ class Listener:
             'password': bot['password'],
             'server': bot['server'],
             'connected': False,
+            'sub_end': 0,
             'api_outdated': False,
             'npc_dialog_open': False,
             'npc_current_question': None,
@@ -59,6 +60,9 @@ class Listener:
 
     def update_game_state(self, data):
         if 'message' in data.keys():
+            if data['message'] == 'IdentificationSuccessMessage':
+                self._game_state['sub_end'] = data['content']['subscriptionEndDate']
+
             if data['message'] in ['JobExperienceMultiUpdateMessage', 'JobExperienceUpdateMessage']:
                 if data['message'] == 'JobExperienceMultiUpdateMessage':
                     jobs_dict = {str(job['jobId']): job for job in data['content']['experiencesUpdate']}
