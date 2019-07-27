@@ -281,6 +281,29 @@ If quantity is not specified, all is assumed.
 if `items == 'all'`, all the items are moved
 If quantity is not specified for an item, all is assumed.
 
+### Go drop bank
+````json
+{
+  "bot": "Mystinu",
+  "command": "go_drop_bank",
+  "parameters": {
+    "return": [[0, 1], 456, 1],
+    "items": [
+      {
+        "general_id": 425,
+        "quantity": 1000
+      },
+      {
+        "general_id": 425
+      } 
+    ]
+  }
+}
+````
+`return` is optionnal and is the position the bot must go back to after dropping its inventory
+if `items == 'all'`, all the items are moved
+If quantity is not specified for an item, all is assumed.
+
 ### Harvest
 ````json
 {
@@ -293,7 +316,7 @@ If quantity is not specified for an item, all is assumed.
   }
 }
 ````
-`blacklist` and `whitelist` are optional can not be used at the same time in the same harvest strategy
+`blacklist` and `whitelist` are optional can not be used at the same time in the same harvest strategy. Everything is whitelisted by default.
 - `whitelist` only authorises the items listed to be harvested
 - `blacklist` only authorises the items not listed to be harvested
 
@@ -304,11 +327,32 @@ If quantity is not specified for an item, all is assumed.
   "command": "harvest_map",
   "parameters": {
       "blacklist": [421],
+      "whitelist": null
+  }
+}
+````
+`blacklist` and `whitelist` are optional can not be used at the same time in the same harvest strategy. Everything is whitelisted by default.
+- `whitelist` only authorises the items listed to be harvested
+- `blacklist` only authorises the items not listed to be harvested
+
+### Harverst duration
+````json
+{
+  "bot": "Mystinu",
+  "command": "harvest_duration",
+  "parameters": {
+      "duration": 60,
+      "path": [
+        [[1, -3], 256, 2],
+        [[1, -4], 256, 2]
+      ],
       "whitelist": [456]
   }
 }
 ````
-`blacklist` and `whitelist` are optional can not be used at the same time in the same harvest strategy
+`duration` is in minutes
+
+`blacklist` and `whitelist` are optional can not be used at the same time in the same harvest strategy. Everything is whitelisted by default.
 - `whitelist` only authorises the items listed to be harvested
 - `blacklist` only authorises the items not listed to be harvested
 
