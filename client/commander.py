@@ -8,11 +8,14 @@ from threading import Thread
 from subprocess import Popen, PIPE
 import time
 
+import datetime
+
 from tools.ws_connector import Connection
 from client.listener import Listener
-from tools import logger
+from tools import logger, discord_bot
 import strategies
 import hashlib
+from credentials import credentials
 
 
 class Commander:
@@ -152,6 +155,7 @@ class Commander:
                     }
                 }
                 self.orders_queue.put((json.dumps(order),))
+                discord_bot.DiscordMessageSender(f'[{datetime.datetime.fromtimestamp(time.time())}] Received check file message').run(credentials['discord']['token'])
 
 
 if __name__ == '__main__':
