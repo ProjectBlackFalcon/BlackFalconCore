@@ -101,8 +101,6 @@ class SwarmNode:
             if 'command' in message.keys() and message['command'] != 'login':
                 new_authorized_clients = []
                 found = False
-                print(self.cartography['authorized_clients'])
-                print(client)
                 for authorized_client, valid_until in self.cartography['authorized_clients']:
                     if valid_until > time.time():
                         new_authorized_clients.append((authorized_client, valid_until))
