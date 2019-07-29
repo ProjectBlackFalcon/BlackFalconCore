@@ -75,6 +75,7 @@ def harvest_duration(**kwargs):
                 total_haul[item_name] = haul
 
         if listener.game_state['weight'] > listener.game_state['max_weight'] - 50:
+            break
             sub_strategy = strategies.go_drop_bank.go_drop_bank(
                 assets=assets,
                 orders_queue=orders_queue,

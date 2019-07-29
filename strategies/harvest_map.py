@@ -87,7 +87,7 @@ def harvest_map(**kwargs):
             failures.append(sub_strategy['report']['details']['Reason'])
 
     execution_time = time.time() - global_start
-    logger.info('Harvested {} in {}s'.format(collected, execution_time))
+    logger.info('Harvested {} on map {} in {}s'.format(collected, listener.game_state['pos'], execution_time))
 
     strategy['report'] = {
         'success': True,

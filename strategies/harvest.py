@@ -8,9 +8,7 @@ from tools import logger as log
 
 def harvest(**kwargs):
     """
-    Uses a zaap to get to a specified destination
-    The bot must be on a map with a zaap
-    This strategy will move the bot to an appropriate cell to use the zaap
+    Harvests a cell's resources after checking that it can.
 
     :param kwargs:
     :return: report
@@ -192,6 +190,20 @@ def harvest(**kwargs):
         }
         log.close_logger(logger)
         return strategy
+
+    # # ---------------------------------------
+    # # TODO: temporary blocking of harvest operation to check if that's the source of bans
+    # strategy['report'] = {
+    #     'success': True,
+    #     'details': {
+    #         'Execution time': time.time() - global_start,
+    #         'Collected': {}
+    #     }
+    # }
+    #
+    # log.close_logger(logger)
+    # return strategy
+    # # ---------------------------------------
 
     # harvest
     inventory_before_harvest = json.loads(json.dumps(listener.game_state['inventory']))

@@ -396,27 +396,40 @@ Optional parameter, default is buy
 {
   "bot": "Mystinu",
   "command": "auctionh_buy",
-  "items": [
-      {
-        "unique_id": 154651616,
-        "pack_size": 100,
-        "quantity": 2
-      }
-  ]
+  "parameters": {
+      "items": [
+          {
+            "unique_id": 154651616,
+            "general_id": null,
+            "pack_size": 100,
+            "quantity": 2
+          }
+      ]
+  }
 }
 ````
+`unique_id` and `general_id` are mutually exclusive, one and only one is required.
 
 ### Sell items
 ````json
 {
   "bot": "Mystinu",
   "command": "auctionh_sell",
-  "items": [
-      {
-        "unique_id": 154651616,
-        "pack_size": 100,
-        "quantity": 2
-      }
-  ]
+  "parameters": {
+      "items": [
+          {
+            "unique_id": 154651616,
+            "general_id": null,
+            "pack_size": 100,
+            "quantity": 2,
+            "price": 10000
+          }
+      ]
+   }
 }
 ````
+`unique_id` and `general_id` are mutually exclusive, one and only one is required.
+
+`quantity` might be `all`, which is the default value if omitted.
+
+`price` is for the whole pack size. The default value is the current pack price - 1
