@@ -128,7 +128,7 @@ def auctionh_get_prices(**kwargs):
             return strategy
 
         for item_id in item_ids:
-            previous_available_ids = listener.game_state['auction_house_info']['items_available'] if 'items_available' in listener.game_state['auction_house_info'].keys() else []
+            previous_available_ids = listener.game_state['auction_house_info']['item_selected'] if 'item_selected' in listener.game_state['auction_house_info'].keys() else []
             order = {
                 "command": "auctionh_select_item",
                 "parameters": {
