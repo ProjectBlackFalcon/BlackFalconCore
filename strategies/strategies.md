@@ -287,7 +287,7 @@ If quantity is not specified for an item, all is assumed.
   "bot": "Mystinu",
   "command": "go_drop_bank",
   "parameters": {
-    "return": [[0, 1], 456, 1],
+    "return": {"pos": [0, 1], "cell": 456, "worldmap": 1},
     "items": [
       {
         "general_id": 425,
@@ -300,7 +300,8 @@ If quantity is not specified for an item, all is assumed.
   }
 }
 ````
-`return` is optionnal and is the position the bot must go back to after dropping its inventory
+`return` is optional and is the position the bot must go back to after dropping its inventory
+if `return == 'current`, the bot will return to the position it's at before starting to go to the bank
 if `items == 'all'`, all the items are moved
 If quantity is not specified for an item, all is assumed.
 
@@ -343,10 +344,11 @@ If quantity is not specified for an item, all is assumed.
   "parameters": {
       "duration": 60,
       "path": [
-        [[1, -3], 256, 2],
-        [[1, -4], 256, 2]
+        {"pos": [1, -3], "cell": 256, "worldmap": 2},
+        {"pos": [1, -4]}
       ],
-      "whitelist": [456]
+      "whitelist": [456],
+      "blacklist": null
   }
 }
 ````

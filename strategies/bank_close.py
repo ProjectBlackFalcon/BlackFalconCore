@@ -59,6 +59,7 @@ def bank_close(**kwargs):
     execution_time = time.time() - global_start
     logger.info('Closed bank in {}s'.format(execution_time))
     strategy['report'] = {
+        'success': True,
         'details': {'Execution time': execution_time}
     }
     log.close_logger(logger)
