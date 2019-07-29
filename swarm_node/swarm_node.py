@@ -42,7 +42,6 @@ class SwarmNode:
             'messages': {},
             'authorized_clients': []
         }
-        # TODO: make the clients log in
 
     def load_assets(self):
         start = time.time()
@@ -93,114 +92,123 @@ class SwarmNode:
         return chunk
 
     def api_on_message(self, client, server, message):
-        self.logger.info('Recieved from {}: {}'.format(client['address'], message))
-        message = json.loads(message)
-        if 'id' not in message.keys():
-            message['id'] = str(uuid.uuid4())
+        try:
+            self.logger.info('Recieved from {}: {}'.format(client['address'], message))
+            message = json.loads(message)
+            if 'id' not in message.keys():
+                message['id'] = str(uuid.uuid4())
 
-        if 'command' in message.keys() and message['command'] != 'login':
-            new_authorized_clients = []
-            found = False
-            print(self.cartography['authorized_clients'])
-            print(client)
-            for authorized_client, valid_until in self.cartography['authorized_clients']:
-                if valid_until > time.time():
-                    new_authorized_clients.append((authorized_client, valid_until))
-                    if authorized_client == client:
-                        found = True
-            self.cartography['authorized_clients'] = new_authorized_clients
-            if not found:
-                self.logger.warning('Unauthorized client tried to connect')
-                message['success'] = False
-                message['details'] = {'reason': 'Unauthorized client'}
-                self.api.send_message(client, json.dumps(message))
-                return
-
-        self.cartography['messages'][message['id']] = client
-        intercept_command = False
-
-        if 'command' in message.keys() and message['command'] == 'new_bot':
-            intercept_command = True
-            self.logger.info('Creating new bot : ' + str(message['parameters']))
-            try:
-                strategies.support_functions.create_profile(
-                    id=message['parameters']['id'],
-                    bot_name=message['bot'],
-                    password=message['parameters']['password'],
-                    username=message['parameters']['username'],
-                    server=message['parameters']['server']
-                )
-                self.logger.info('Created : ' + str(message['bot']))
-                message['success'] = True
-                message['details'] = {}
-                self.api.send_message(client, json.dumps(message))
-            except Exception as e:
-                if e.args[0] == 'Bot already exists. Delete it using the \'delete_bot\' command first.':
-                    self.logger.warn('Failed creating : ' + str(message['bot']))
+            if 'command' in message.keys() and message['command'] != 'login':
+                new_authorized_clients = []
+                found = False
+                print(self.cartography['authorized_clients'])
+                print(client)
+                for authorized_client, valid_until in self.cartography['authorized_clients']:
+                    if valid_until > time.time():
+                        new_authorized_clients.append((authorized_client, valid_until))
+                        if authorized_client == client:
+                            found = True
+                self.cartography['authorized_clients'] = new_authorized_clients
+                if not found:
+                    self.logger.warning('Unauthorized client tried to connect')
                     message['success'] = False
-                    message['details'] = {'reason': e.args[0]}
-                    self.api.send_message(client, json.dumps(message))
-                else:
-                    raise
-                return
-
-        if 'command' in message.keys() and message['command'] == 'delete_bot':
-            strategies.support_functions.delete_profile(message['bot'])
-            message['success'] = True
-            message['details'] = {}
-            if message['bot'] in self.cartography.keys():
-                self.kill_commander(message['bot'])
-            self.api.send_message(client, json.dumps(message))
-            return
-
-        if 'command' in message.keys() and message['command'] == 'login':
-            if 'parameters' in message.keys() and 'token' in message['parameters'].keys():
-                valid_until = support_functions.token_is_authorized(message['parameters']['token'])
-                if valid_until:
-                    for authorized_client, _ in self.cartography['authorized_clients']:
-                        message['success'] = True
-                        if client == authorized_client:
-                            self.api.send_message(client, json.dumps(message))
-                            return
-                    self.cartography['authorized_clients'].append((client, valid_until))
-                    message['success'] = True
+                    message['details'] = {'reason': 'Unauthorized client'}
                     self.api.send_message(client, json.dumps(message))
                     return
-                else:
-                    message['success'] = False
-                    self.api.send_message(client, json.dumps(message))
-            return
 
-        if 'bot' in message.keys() and message['bot'] not in self.cartography.keys():
-            self.logger.info('Bot is not running. Starting commander for {}'.format(message['bot']))
-            try:
-                self.spawn_commander(json.loads(json.dumps(message['bot'])), client)
-            except Exception as e:
-                if e.args[0] == 'Bot does not exist. Create a profile using the \'new_bot\' command first.':
-                    message['success'] = False
-                    message['details'] = {'reason': e.args[0]}
+            self.cartography['messages'][message['id']] = client
+            intercept_command = False
+
+            if 'command' in message.keys() and message['command'] == 'new_bot':
+                intercept_command = True
+                self.logger.info('Creating new bot : ' + str(message['parameters']))
+                try:
+                    strategies.support_functions.create_profile(
+                        id=message['parameters']['id'],
+                        bot_name=message['bot'],
+                        password=message['parameters']['password'],
+                        username=message['parameters']['username'],
+                        server=message['parameters']['server']
+                    )
+                    self.logger.info('Created : ' + str(message['bot']))
+                    message['success'] = True
+                    message['details'] = {}
                     self.api.send_message(client, json.dumps(message))
-                else:
-                    raise
+                except Exception as e:
+                    if e.args[0] == 'Bot already exists. Delete it using the \'delete_bot\' command first.':
+                        self.logger.warn('Failed creating : ' + str(message['bot']))
+                        message['success'] = False
+                        message['details'] = {'reason': e.args[0]}
+                        self.api.send_message(client, json.dumps(message))
+                    else:
+                        raise
+                    return
+
+            if 'command' in message.keys() and message['command'] == 'delete_bot':
+                strategies.support_functions.delete_profile(message['bot'])
+                message['success'] = True
+                message['details'] = {}
+                if message['bot'] in self.cartography.keys():
+                    self.kill_commander(message['bot'])
+                self.api.send_message(client, json.dumps(message))
                 return
 
-        if not intercept_command:
-            self.logger.info('Adding strategy to {}: {}'.format(message['bot'], message))
-            self.cartography[message['bot']]['strategies_queue'].put(message)
+            if 'command' in message.keys() and message['command'] == 'login':
+                if 'parameters' in message.keys() and 'token' in message['parameters'].keys():
+                    valid_until = support_functions.token_is_authorized(message['parameters']['token'])
+                    if valid_until:
+                        for authorized_client, _ in self.cartography['authorized_clients']:
+                            message['success'] = True
+                            if client == authorized_client:
+                                self.api.send_message(client, json.dumps(message))
+                                return
+                        self.cartography['authorized_clients'].append((client, valid_until))
+                        message['success'] = True
+                        self.api.send_message(client, json.dumps(message))
+                        return
+                    else:
+                        message['success'] = False
+                        self.api.send_message(client, json.dumps(message))
+                return
+
+            if 'bot' in message.keys() and message['bot'] not in self.cartography.keys():
+                self.logger.info('Bot is not running. Starting commander for {}'.format(message['bot']))
+                try:
+                    self.spawn_commander(json.loads(json.dumps(message['bot'])), client)
+                except Exception as e:
+                    if e.args[0] == 'Bot does not exist. Create a profile using the \'new_bot\' command first.':
+                        message['success'] = False
+                        message['details'] = {'reason': e.args[0]}
+                        self.api.send_message(client, json.dumps(message))
+                    else:
+                        raise
+                    return
+
+            if not intercept_command:
+                self.logger.info('Adding strategy to {}: {}'.format(message['bot'], message))
+                self.cartography[message['bot']]['strategies_queue'].put(message)
+
+        except Exception:
+            self.logger.warning('Received badly formatted strategy')
+            self.logger.warning(traceback.format_exc())
 
     def reports_listener(self):
         while 1:
-            report = self.report_queue.get()
-            self.logger.info('New report from {}: {}'.format(report['bot'], report))
-            if 'exception_notif' in report.keys():
-                # A component of a bot died, kill the rest of it
-                client = self.cartography[report['bot']]['client']
-                self.kill_commander(report['bot'])
-            else:
-                # Business as usual
-                client = self.cartography['messages'].pop(report['id'])
+            try:
+                report = self.report_queue.get()
+                self.logger.info('New report from {}: {}'.format(report['bot'], report))
+                if 'exception_notif' in report.keys():
+                    # A component of a bot died, kill the rest of it
+                    client = self.cartography[report['bot']]['client']
+                    self.kill_commander(report['bot'])
+                else:
+                    # Business as usual
+                    client = self.cartography['messages'].pop(report['id'])
 
-            self.api.send_message(client, json.dumps(report))
+                self.api.send_message(client, json.dumps(report))
+            except Exception:
+                self.logger.warning('Received badly formatted report')
+                self.logger.warning(traceback.format_exc())
 
     def spawn_commander(self, bot_name, client):
         if bot_name in self.cartography.keys():
