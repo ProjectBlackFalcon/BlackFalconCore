@@ -337,7 +337,7 @@ Button(login_frame, text='Login', command=lambda: login(orders, reports)).grid(r
 
 Label(main_frame, text="Bot name").grid(row=2, column=1)
 bot_name = Entry(main_frame)
-bot_name.insert(END, 'Usain-bot')
+bot_name.insert(END, 'Dark-ervellos')
 bot_name.grid(row=2, column=2)
 
 selected_strat = StringVar(tk)
