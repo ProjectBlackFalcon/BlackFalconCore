@@ -144,7 +144,7 @@ def go_drop_bank(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    if 'parameters' in strategy.keys() and 'return' in strategy['parameters'].keys():
+    if 'parameters' in strategy.keys() and 'return' in strategy['parameters'].keys() and strategy['parameters']['return'] is not None:
         sub_strategy = strategies.goto.goto(
             orders_queue=orders_queue,
             assets=assets,

@@ -13,7 +13,7 @@ def goto(**kwargs):
     target_x = strategy['parameters']['x']
     target_y = strategy['parameters']['y']
     target_cell = strategy['parameters']['cell'] if 'cell' in strategy['parameters'] else None
-    target_worldmap = strategy['parameters']['worldmap'] if 'worldmap' in strategy['parameters'] else 1
+    target_worldmap = strategy['parameters']['worldmap'] if 'worldmap' in strategy['parameters'] and strategy['parameters']['worldmap'] is not None else 1
 
     logger = log.get_logger(__file__, strategy['bot'])
 
