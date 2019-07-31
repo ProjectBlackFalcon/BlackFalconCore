@@ -150,9 +150,12 @@ class Listener:
                             self._game_state['stated_elements'].append(element)
 
                 # Update positions in Mongo profile
-                Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'position', tuple(self._game_state['pos']))).start()
-                Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'cell', self._game_state['cell'])).start()
-                Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'worldmap', self._game_state['worldmap'])).start()
+                pos = json.loads(json.dumps(tuple(self._game_state['pos'])))
+                Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'position', pos)).start()
+                cell = self._game_state['cell']
+                Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'cell', cell)).start()
+                worldmap = self._game_state['worldmap']
+                Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'worldmap', worldmap)).start()
 
             if data['message'] == 'StatedElementUpdatedMessage':
                 for element in self._game_state['stated_elements']:
