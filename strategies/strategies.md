@@ -433,3 +433,11 @@ Optional parameter, default is buy
 `quantity` might be `all`, which is the default value if omitted.
 
 `price` is for the whole pack size. The default value is the current pack price - 1
+
+### Path ten
+````json
+{
+  "bot": "Mystinu",
+  "command": "path_ten"
+}
+````
