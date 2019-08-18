@@ -441,3 +441,11 @@ Optional parameter, default is buy
   "command": "path_ten"
 }
 ````
+
+### Achievement reward
+````json
+{
+  "bot": "Mystinu",
+  "command": "achievement_reward"
+}
+````

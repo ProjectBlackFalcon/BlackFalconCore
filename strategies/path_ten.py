@@ -2,7 +2,7 @@ import json
 import time
 
 import strategies
-from strategies import support_functions, goto, harvest_map, go_drop_bank
+from strategies import support_functions, goto
 from tools import logger as log
 
 
@@ -29,7 +29,7 @@ def path_ten(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    path = path = [
+    path = [
         {'pos': [-2, -4], 'worldmap': 2},
         {'pos': [-2, -2], 'worldmap': 2},
         {'pos': [1, -2], 'worldmap': 2},
@@ -75,6 +75,22 @@ def path_ten(**kwargs):
                     'y': pos['pos'][1],
                     'worldmap': pos['worldmap'] if 'worldmap' in pos.keys() else 1
                 }
+            }
+        )
+        if not sub_strategy['report']['success']:
+            strategy['report'] = {
+                'success': False,
+                'details': {'Execution time': time.time() - start, 'Reason': sub_strategy['report']}
+            }
+            log.close_logger(logger)
+            return strategy
+
+        sub_strategy = strategies.achievement_reward.achievement_reward(
+            assets=assets,
+            orders_queue=orders_queue,
+            listener=listener,
+            strategy={
+                'bot': strategy['bot']
             }
         )
         if not sub_strategy['report']['success']:

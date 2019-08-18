@@ -239,3 +239,13 @@ Should also send the `ExchangeBidHousePriceMessage`
 }
 ````
 Should also send the `ExchangeBidHousePriceMessage`
+
+### Get Achievement reward
+````json
+{
+  "command": "achievement_get",
+  "parameters":{
+    "actor_id": 544591118544
+  }
+}
+````
