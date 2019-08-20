@@ -1,4 +1,5 @@
 import json
+import random
 import uuid
 
 import numpy as np
@@ -207,7 +208,7 @@ def get_path_nodes(graph, start_node_id, end_node_id):
             coords = ''
             for node_id in data:
                 if graph[node_id]['coord'] != coords:
-                    path.append({'coord': graph[node_id]['coord'], 'cell': graph[node_id]['cell'], 'direction': graph[node_id]['direction']})
+                    path.append({'coord': graph[node_id]['coord'], 'cell': random.choice(graph[node_id]['edge']), 'direction': graph[node_id]['direction']})
                     coords = graph[node_id]['coord']
 
             path.append({'coord': graph[start_node_id]['coord'], 'cell': graph[start_node_id]['cell'], 'direction': graph[start_node_id]['direction']})
@@ -400,8 +401,9 @@ if __name__ == '__main__':
     #
     # print('Starting')
     # print(get_path(mapinfo, graph, (4, -18), (3, -5)))
-    client = mongo_client()
-    print([thing for thing in client.blackfalcon.tokens.find({})])
-    token = generate_token(time.time() + 90, 'Test token')
-    print(token)
-    print(token_is_authorized(token))
+    # client = mongo_client()
+    # print([thing for thing in client.blackfalcon.tokens.find({})])
+    # token = generate_token(time.time() + 90, 'Test token')
+    # print(token)
+    # print(token_is_authorized(token))
+    print(get_profile('Usain-bot'))
