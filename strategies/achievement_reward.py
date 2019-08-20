@@ -17,7 +17,7 @@ def achievement_reward(**kwargs):
 
     logger = log.get_logger(__name__, strategy['bot'])
 
-    if not listener.game_state['achievement_available']:
+    if not len(listener.game_state['achievement_available']):
         logger.warn('No achievement available')
         strategy['report'] = {
             'success': True,
@@ -32,6 +32,7 @@ def achievement_reward(**kwargs):
             'actor_id': listener.game_state['actor_id']
         }
     }
+    achievements_list = listener.game_state['achievement_available'][:]
     logger.info('Sending order to bot API: {}'.format(order))
     orders_queue.put((json.dumps(order),))
 
@@ -39,9 +40,8 @@ def achievement_reward(**kwargs):
     timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
     waiting = True
     while waiting and time.time() - start < timeout:
-        if 'achievement_available' in listener.game_state.keys():
-            if not listener.game_state['achievement_available']:
-                waiting = False
+        if set(listener.game_state['achievement_available']) != set(achievements_list):
+            waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
 

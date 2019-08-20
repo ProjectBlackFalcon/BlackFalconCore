@@ -1,4 +1,5 @@
 import time
+import uuid
 from queue import Queue
 from threading import Thread
 
@@ -42,7 +43,7 @@ class Listener:
             'stated_elements': [],
             'file_request_message': {'timestamp': 0},
             'auction_house_info': [],
-            'achievement_available': False
+            'achievement_available': []
         }
         self.game_state = json.loads(json.dumps(self._game_state))
         self.messages_queue = []
@@ -299,7 +300,7 @@ class Listener:
                 self._game_state['auction_house_info']['item_selected'] = data['content']['itemTypeDescriptions']
 
             if data['message'] == 'AchievementFinishedMessage':
-                self._game_state['achievement_available'] = True
+                self._game_state['achievement_available'].append(str(uuid.uuid4()))
 
             if data['message'] == 'AchievementRewardSuccessMessage':
-                self._game_state['achievement_available'] = True
+                self._game_state['achievement_available'] = []

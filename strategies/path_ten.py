@@ -62,6 +62,28 @@ def path_ten(**kwargs):
         {'pos': [-35, -52]},
         {'pos': [-35, -54]},
         {'pos': [-34, -59]},
+        {'pos': [-29, -47]},
+        {'pos': [-27, -34]},
+        {'pos': [-25, -11]},
+        {'pos': [-16, -3]},
+        {'pos': [-18, -1]},
+        {'pos': [-22, -1]},
+        {'pos': [-24, 14]},
+        {'pos': [-19, 23]},
+        {'pos': [-22, 28]},
+        {'pos': [-22, 29]},
+        {'pos': [-27, 41]},
+        {'pos': [-26, 40]},
+        {'pos': [-24, 40]},
+        {'pos': [-22, 40]},
+        {'pos': [-20, 40]},
+        {'pos': [-22, 37]},
+        {'pos': [-24, 37]},
+        {'pos': [-28, 37]},
+        {'pos': [-29, 37]},
+        {'pos': [-29, 34]},
+        {'pos': [-27, 33]},
+        {'pos': [-26, 33]},
     ]
     for pos in path:
         sub_strategy = strategies.goto.goto(
@@ -100,6 +122,22 @@ def path_ten(**kwargs):
             }
             log.close_logger(logger)
             return strategy
+
+    sub_strategy = strategies.achievement_reward.achievement_reward(
+        assets=assets,
+        orders_queue=orders_queue,
+        listener=listener,
+        strategy={
+            'bot': strategy['bot']
+        }
+    )
+    if not sub_strategy['report']['success']:
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': time.time() - start, 'Reason': sub_strategy['report']}
+        }
+        log.close_logger(logger)
+        return strategy
 
     logger.info('Finished walking path 10 in {}s'.format(time.time() - global_start))
     strategy['report'] = {
