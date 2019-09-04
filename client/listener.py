@@ -297,7 +297,27 @@ class Listener:
                 self._game_state['auction_house_info']['items_available'] = data['content']['typeDescription']
 
             if data['message'] == 'ExchangeTypesItemsExchangerDescriptionForUserMessage':
-                self._game_state['auction_house_info']['item_selected'] = data['content']['itemTypeDescriptions']
+                if 'item_selected' not in self._game_state['auction_house_info'].keys():
+                    self._game_state['auction_house_info']['item_selected'] = [data['content']['itemTypeDescriptions']]
+
+                elif len(self._game_state['auction_house_info']['item_selected']) < 2:
+                    self._game_state['auction_house_info']['item_selected'].append(data['content']['itemTypeDescriptions'])
+
+                elif data['content']['itemTypeDescriptions'] != self._game_state['auction_house_info']['item_selected'][0]:
+                    del self._game_state['auction_house_info']['item_selected'][0]
+                    self._game_state['auction_house_info']['item_selected'].append(data['content']['itemTypeDescriptions'])
+
+            # if data['message'] == 'ExchangeErrorMessage' and 'errorType' in data['content'].keys() and data['content']['errorType'] == 11:
+            #     # Item is not for sale
+            #     if 'item_selected' not in self._game_state['auction_house_info'].keys():
+            #         self._game_state['auction_house_info']['item_selected'] = [str(uuid.uuid4())]
+            #
+            #     elif len(self._game_state['auction_house_info']['item_selected']) < 2:
+            #         self._game_state['auction_house_info']['item_selected'].append(str(uuid.uuid4()))
+            #
+            #     else:
+            #         del self._game_state['auction_house_info']['item_selected'][0]
+            #         self._game_state['auction_house_info']['item_selected'].append(str(uuid.uuid4()))
 
             if data['message'] == 'AchievementFinishedMessage':
                 self._game_state['achievement_available'].append(str(uuid.uuid4()))

@@ -7,7 +7,7 @@ import strategies
 
 def auctionh_get_prices(**kwargs):
     """
-    A strategy to open the auction house.
+    A strategy to get prices from the auction house.
 
     :param kwargs: strategy, listener, and orders_queue
     :return: the input strategy with a report
@@ -21,7 +21,7 @@ def auctionh_get_prices(**kwargs):
 
     global_start, start = time.time(), time.time()
 
-    # Check that the auction house is open if it is, close it and open it again.
+    # Check that the auction house is open. If it is, close it and open it again.
     # This is to prevent some edge case of item or type selection. See todos, lower in this script.
     if not listener.game_state['auction_house_info']:
         sub_strategy = strategies.auctionh_open.auctionh_open(
@@ -84,9 +84,18 @@ def auctionh_get_prices(**kwargs):
             ids = strategy['parameters']['general_ids_list']
 
         else:
-            ids = [int(item_id) for item_id, type_id in assets['id_2_type'].items() if type_id in listener.game_state['auction_house_info']['buyerDescriptor']['types']]
+            ids = 'all'
     else:
-        ids = [int(item_id) for item_id, type_id in assets['id_2_type'].items() if type_id in listener.game_state['auction_house_info']['buyerDescriptor']['types']]
+        ids = 'all'
+
+    if ids == 'all':
+        actual_ids = []
+        for item_id, type_id in assets['id_2_type'].items():
+            if type_id in listener.game_state['auction_house_info']['buyerDescriptor']['types']:
+                item_level = assets['id_2_level'][str(item_id)]
+                if item_level <= 60 or listener.game_state['sub_end']:
+                    actual_ids.append(int(item_id))
+        ids = actual_ids
 
     id_with_types = {}
     for item_id in ids:
@@ -128,43 +137,46 @@ def auctionh_get_prices(**kwargs):
             return strategy
 
         for item_id in item_ids:
-            previous_available_ids = listener.game_state['auction_house_info']['item_selected'] if 'item_selected' in listener.game_state['auction_house_info'].keys() else []
-            order = {
-                "command": "auctionh_select_item",
-                "parameters": {
-                    "general_id": item_id
+            if item_id in listener.game_state['auction_house_info']['items_available']:
+                previous_available_ids = str(listener.game_state['auction_house_info']['item_selected'][-1]) if 'item_selected' in listener.game_state['auction_house_info'].keys() else []
+                order = {
+                    "command": "auctionh_select_item",
+                    "parameters": {
+                        "general_id": item_id
+                    }
                 }
-            }
-            logger.info('Sending order to bot API: {}'.format(order))
-            orders_queue.put((json.dumps(order),))
+                logger.info('Sending order to bot API: {}'.format(order))
+                orders_queue.put((json.dumps(order),))
 
-            start = time.time()
-            timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
-            waiting = True
-            while waiting and time.time() - start < timeout:
-                if 'auction_house_info' in listener.game_state.keys() and 'item_selected' in listener.game_state['auction_house_info']:
-                    # TODO: This test is going to wrongly fail if asked to switch from an item to the same one
-                    if listener.game_state['auction_house_info']['item_selected'] != previous_available_ids:
-                        waiting = False
-                time.sleep(0.05)
-            execution_time = time.time() - start
+                start = time.time()
+                timeout = 10 if 'timeout' not in strategy.keys() else strategy['timeout']
+                waiting = True
+                while waiting and time.time() - start < timeout:
+                    if 'auction_house_info' in listener.game_state.keys() and 'item_selected' in listener.game_state['auction_house_info']:
+                        # TODO: This test is going to wrongly fail if asked to switch from an item to the same one
+                        if str(listener.game_state['auction_house_info']['item_selected'][-1]) != previous_available_ids:
+                            waiting = False
+                    time.sleep(0.05)
+                execution_time = time.time() - start
 
-            if waiting:
-                logger.warn('Failed to select item')
-                strategy['report'] = {
-                    'success': False,
-                    'details': {'Execution time': execution_time, 'Reason': 'Failed to select item'}
+                if waiting:
+                    logger.warn('Failed to select item')
+                    strategy['report'] = {
+                        'success': False,
+                        'details': {'Execution time': execution_time, 'Reason': 'Failed to select item'}
+                    }
+                    log.close_logger(logger)
+                    return strategy
+                results[item_id] = {
+                    'item_name': assets['id_2_names'][str(item_id)],
+                    'items_stats': listener.game_state['auction_house_info']['item_selected']
                 }
-                log.close_logger(logger)
-                return strategy
-            results[item_id] = {
-                'item_name': assets['id_2_names'][str(item_id)],
-                'items_stats': listener.game_state['auction_house_info']['item_selected']
-            }
 
     strategy['report'] = {
         'success': True,
-        'details': {'Execution time': time.time() - global_start, 'Results': results}
+        'details': {'Execution time': time.time() - global_start}
     }
     log.close_logger(logger)
+    with open('lel', 'w') as f:
+        json.dump(results, f)
     return strategy

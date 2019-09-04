@@ -122,7 +122,7 @@ def path_ten(**kwargs):
             }
             log.close_logger(logger)
             return strategy
-
+    time.sleep(2)
     sub_strategy = strategies.achievement_reward.achievement_reward(
         assets=assets,
         orders_queue=orders_queue,
