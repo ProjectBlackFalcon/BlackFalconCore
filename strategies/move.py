@@ -21,16 +21,6 @@ def move(**kwargs):
     logger = log.get_logger(__name__, strategy['bot'])
     global_start = time.time()
 
-    if 'cell' in listener.game_state.keys():
-        if listener.game_state['cell'] == strategy['parameters']['cell']:
-            logger.info('Completed move to cell {} in {}s'.format(strategy['parameters']['cell'], 0))
-            strategy['report'] = {
-                'success': True,
-                'details': {'Execution time': 0}
-            }
-            log.close_logger(logger)
-            return strategy
-
     # Close the auction house if it is open
     if len(listener.game_state['auction_house_info']):
         sub_strategy = auctionh_close.auctionh_close(
@@ -45,6 +35,16 @@ def move(**kwargs):
             strategy['report'] = {
                 'success': False,
                 'details': {'Execution time': time.time() - global_start, 'Reason': sub_strategy['report']}
+            }
+            log.close_logger(logger)
+            return strategy
+
+    if 'cell' in listener.game_state.keys():
+        if listener.game_state['cell'] == strategy['parameters']['cell']:
+            logger.info('Completed move to cell {} in {}s'.format(strategy['parameters']['cell'], 0))
+            strategy['report'] = {
+                'success': True,
+                'details': {'Execution time': 0}
             }
             log.close_logger(logger)
             return strategy
