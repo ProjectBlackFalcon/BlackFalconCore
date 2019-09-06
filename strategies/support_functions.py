@@ -1,3 +1,4 @@
+import hashlib
 import json
 import random
 import uuid
@@ -9,6 +10,7 @@ import itertools
 import sys
 
 import pymongo
+import psycopg2
 
 from credentials import credentials
 
@@ -389,6 +391,55 @@ def token_is_authorized(token):
     return token_data['valid_until']
 
 
+def log_prices(object_type, data, server, sampling_time):
+    conn = psycopg2.connect(
+        dbname=credentials['postgre']['database'],
+        user=credentials['postgre']['user'],
+        host=credentials['postgre']['host'],
+        password=credentials['postgre']['password'],
+        port=credentials['postgre']['port']
+    )
+    cursor = conn.cursor()
+
+    if object_type == 'item':
+        objects = []
+        for item_id, item in list(data.items()):
+            for object in item['items_stats'][0]:
+                formatted_object = (
+                    item_id,
+                    server,
+                    object['prices'][0],
+                    object['prices'][1],
+                    object['prices'][2],
+                    -1,
+                    str(object['effects']).replace("'", '"'),
+                    hashlib.sha256(str(object['effects']).encode('utf8')).hexdigest(),
+                    int(sampling_time)
+                )
+                objects.append(formatted_object)
+        cursor.executemany("INSERT INTO itemprices (itemid, server, price1, price10, price100, craftcost, stats, hash, sampleid) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)", objects)
+
+    elif object_type == 'resource':
+        objects = []
+        for item_id, item in list(data.items()):
+            for object in item['items_stats'][0]:
+                formatted_object = (
+                    item_id,
+                    'Julith',
+                    object['prices'][0],
+                    object['prices'][1],
+                    object['prices'][2],
+                    sampling_time
+                )
+                objects.append(formatted_object)
+        cursor.executemany("INSERT INTO resourceprices (itemid, server, price1, price10, price100, sampleid) VALUES(%s,%s,%s,%s,%s,%s)", objects)
+
+    else:
+        raise Exception('Type must be "item" or "resource", got {}'.format(object_type))
+    conn.commit()
+    conn.close()
+
+
 if __name__ == '__main__':
     # mapinfo = []
     # for i in range(8):
@@ -406,4 +457,4 @@ if __name__ == '__main__':
     # token = generate_token(time.time() + 90, 'Test token')
     # print(token)
     # print(token_is_authorized(token))
-    print(get_profile('Usain-bot'))
+    log_prices('lel', '')
