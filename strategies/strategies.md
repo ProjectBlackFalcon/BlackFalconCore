@@ -386,8 +386,20 @@ Optional parameter, default is buy
   "bot": "Mystinu",
   "command": "auctionh_get_prices",
   "parameters": {
-    "general_ids_list": [421, 1782]
+    "general_ids_list": [421, 1782],
+    "sample_timestamp": 1238465313684
   }
+}
+````
+`general_ids_list` can be `'all'`
+
+`sample_timestamp` is optionnal
+
+### Get all items prices
+````json
+{
+  "bot": "Mystinu",
+  "command": "auctionh_get_all_prices"
 }
 ````
 
