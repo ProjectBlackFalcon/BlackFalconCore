@@ -2,7 +2,7 @@ import ast
 import json
 import time
 
-import strategies
+from strategies import support_functions, auctionh_close
 from tools import logger as log
 
 
@@ -19,7 +19,7 @@ def move(**kwargs):
     assets = kwargs['assets']
 
     logger = log.get_logger(__name__, strategy['bot'])
-    actual_start = time.time()
+    global_start = time.time()
 
     if 'cell' in listener.game_state.keys():
         if listener.game_state['cell'] == strategy['parameters']['cell']:
@@ -31,8 +31,26 @@ def move(**kwargs):
             log.close_logger(logger)
             return strategy
 
+    # Close the auction house if it is open
+    if len(listener.game_state['auction_house_info']):
+        sub_strategy = auctionh_close.auctionh_close(
+            listener=listener,
+            orders_queue=orders_queue,
+            assets=assets,
+            strategy={
+                "bot": strategy['bot'],
+            }
+        )
+        if not sub_strategy['report']['success']:
+            strategy['report'] = {
+                'success': False,
+                'details': {'Execution time': time.time() - global_start, 'Reason': sub_strategy['report']}
+            }
+            log.close_logger(logger)
+            return strategy
+
     current_pos = '{};{}'.format(listener.game_state['pos'][0], listener.game_state['pos'][1])
-    map_data = strategies.support_functions.fetch_map(assets['map_info'], current_pos, listener.game_state['worldmap'])
+    map_data = support_functions.fetch_map(assets['map_info'], current_pos, listener.game_state['worldmap'])
     deserialized_raw_cells = []
     for cell in map_data['rawCells']:
         deserialized_raw_cells.append(ast.literal_eval(assets['map_info_index'][cell]))
@@ -85,7 +103,7 @@ def move(**kwargs):
         log.close_logger(logger)
         return strategy
 
-    logger.info('Completed move to cell {} in {}s'.format(strategy['parameters']['cell'], time.time() - actual_start))
+    logger.info('Completed move to cell {} in {}s'.format(strategy['parameters']['cell'], time.time() - global_start))
     strategy['report'] = {
         'success': True,
         'details': {'Execution time': execution_time}
