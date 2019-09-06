@@ -1,8 +1,10 @@
 import json
+
 import time
 
 from tools import logger as log
 import strategies
+from strategies import support_functions
 
 
 def auctionh_get_prices(**kwargs):
@@ -20,6 +22,10 @@ def auctionh_get_prices(**kwargs):
     logger = log.get_logger(__name__, strategy['bot'])
 
     global_start, start = time.time(), time.time()
+
+    sample_timestamp = int(time.time())
+    if 'sample_timestamp' in strategy['parameters']:
+        sample_timestamp = strategy['parameters']['sample_timestamp']
 
     # Check that the auction house is open. If it is, close it and open it again.
     # This is to prevent some edge case of item or type selection. See todos, lower in this script.
@@ -88,7 +94,9 @@ def auctionh_get_prices(**kwargs):
     else:
         ids = 'all'
 
+    all = False
     if ids == 'all':
+        all = True
         actual_ids = []
         for item_id, type_id in assets['id_2_type'].items():
             if type_id in listener.game_state['auction_house_info']['buyerDescriptor']['types']:
@@ -154,7 +162,7 @@ def auctionh_get_prices(**kwargs):
                 while waiting and time.time() - start < timeout:
                     if 'auction_house_info' in listener.game_state.keys() and 'item_selected' in listener.game_state['auction_house_info']:
                         # TODO: This test is going to wrongly fail if asked to switch from an item to the same one
-                        if str(listener.game_state['auction_house_info']['item_selected'][-1]) != previous_available_ids:
+                        if str(listener.game_state['auction_house_info']['item_selected'][-1]) != str(previous_available_ids):
                             waiting = False
                     time.sleep(0.05)
                 execution_time = time.time() - start
@@ -167,16 +175,26 @@ def auctionh_get_prices(**kwargs):
                     }
                     log.close_logger(logger)
                     return strategy
+
                 results[item_id] = {
                     'item_name': assets['id_2_names'][str(item_id)],
                     'items_stats': listener.game_state['auction_house_info']['item_selected']
                 }
 
-    strategy['report'] = {
-        'success': True,
-        'details': {'Execution time': time.time() - global_start}
-    }
+    if all:
+        object_type = 'resource'
+        if int(list(results.keys())[0]) in assets['hdv_2_id']['Equipements']:
+            object_type = 'item'
+
+        support_functions.log_prices(object_type, results, listener.game_state['server'], sample_timestamp)
+        strategy['report'] = {
+            'success': True,
+            'details': {'Execution time': time.time() - global_start}
+        }
+    else:
+        strategy['report'] = {
+            'success': True,
+            'details': {'Execution time': time.time() - global_start, 'Results': results}
+        }
     log.close_logger(logger)
-    with open('lel', 'w') as f:
-        json.dump(results, f)
     return strategy

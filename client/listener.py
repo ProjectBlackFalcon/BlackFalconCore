@@ -294,7 +294,10 @@ class Listener:
                 self._game_state['auction_house_mode'] = 'sell'
 
             if data['message'] == 'ExchangeTypesExchangerDescriptionForUserMessage':
-                self._game_state['auction_house_info']['items_available'] = data['content']['typeDescription']
+                if not len(data['content']['typeDescription']):
+                    self._game_state['auction_house_info']['items_available'] = [str(uuid.uuid4())]
+                else:
+                    self._game_state['auction_house_info']['items_available'] = data['content']['typeDescription']
 
             if data['message'] == 'ExchangeTypesItemsExchangerDescriptionForUserMessage':
                 if 'item_selected' not in self._game_state['auction_house_info'].keys():
