@@ -92,6 +92,8 @@ class SwarmNode:
         return chunk
 
     def api_on_message(self, client, server, message):
+        if message == '':
+            return
         try:
             self.logger.info('Recieved from {}: {}'.format(client['address'], message))
             message = json.loads(message)

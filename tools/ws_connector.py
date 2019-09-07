@@ -1,8 +1,9 @@
 import json
 import queue
 
+import time
 import websocket
-from threading import Thread
+from threading import Thread, Timer
 
 from tools import logger
 
@@ -18,7 +19,7 @@ class Connection:
         self.connection_string = 'ws://{}:{}'.format(host, port)
         self.logger.info('Connecting to websocket at: ' + self.connection_string)
         self.connection = websocket.WebSocketApp(self.connection_string, on_open=self.on_open, on_message=self.on_message, on_error=self.on_error, on_close=self.on_close)
-        self.connection.run_forever()
+        self.connection.run_forever(ping_interval=15)
         if not self.stop[0]:
             raise Exception("Websocket at {} closed unexpectedly".format(self.connection_string))
 
@@ -37,7 +38,13 @@ class Connection:
             self.logger.error("Websocket at {} closed unexpectedly".format(self.connection_string))
             logger.close_logger(self.logger)
 
+    def keep_alive(self):
+        while 1:
+            self.connection.send("0 0 0 1 0\n\0")
+            time.sleep(15)
+
     def on_open(self):
+        # Thread(target=self.keep_alive).start()
         self.logger.info('Connection established to websocket at ' + self.connection_string + ', ready to send orders')
 
         def run(queue):
