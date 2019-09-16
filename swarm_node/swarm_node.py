@@ -171,14 +171,19 @@ class SwarmNode:
                         self.api.send_message(client, json.dumps(message))
                 return
 
+            if 'command' in message.keys() and message['command'] == 'test':
+                self.api.send_message(client, json.dumps({'success': True}))
+                return
+
             if 'bot' in message.keys() and message['bot'] not in self.cartography.keys():
                 self.logger.info('Bot is not running. Starting commander for {}'.format(message['bot']))
                 try:
                     self.spawn_commander(json.loads(json.dumps(message['bot'])), client)
                 except Exception as e:
                     if e.args[0] == 'Bot does not exist. Create a profile using the \'new_bot\' command first.':
-                        message['success'] = False
-                        message['details'] = {'reason': e.args[0]}
+                        message['report'] = {}
+                        message['report']['success'] = False
+                        message['report']['details'] = {'reason': e.args[0]}
                         self.api.send_message(client, json.dumps(message))
                     else:
                         raise
@@ -206,6 +211,10 @@ class SwarmNode:
                     client = self.cartography['messages'].pop(report['id'])
 
                 self.api.send_message(client, json.dumps(report))
+
+            except BrokenPipeError:
+                self.logger.warning('Client closed connection')
+                self.logger.warning(traceback.format_exc())
             except Exception:
                 self.logger.warning('Received badly formatted report')
                 self.logger.warning(traceback.format_exc())
