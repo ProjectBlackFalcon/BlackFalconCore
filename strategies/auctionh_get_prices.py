@@ -186,10 +186,10 @@ def auctionh_get_prices(**kwargs):
         if int(list(results.keys())[0]) in assets['hdv_2_id']['Equipements']:
             object_type = 'item'
 
-        support_functions.log_prices(object_type, results, listener.game_state['server'], sample_timestamp)
+        n_new_entries = support_functions.log_prices(object_type, results, listener.game_state['server'], sample_timestamp)
         strategy['report'] = {
             'success': True,
-            'details': {'Execution time': time.time() - global_start}
+            'details': {'Execution time': time.time() - global_start, 'Number of new entries': n_new_entries}
         }
     else:
         strategy['report'] = {

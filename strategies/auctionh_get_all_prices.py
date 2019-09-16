@@ -21,6 +21,7 @@ def auctionh_get_all_prices(**kwargs):
     logger = log.get_logger(__name__, strategy['bot'])
 
     global_start, start = time.time(), time.time()
+    n_new_entries = 0
 
     path = [
         (6, -17),
@@ -79,9 +80,11 @@ def auctionh_get_all_prices(**kwargs):
             log.close_logger(logger)
             return strategy
 
+        n_new_entries += sub_strategy['report']['details']['Number of new entries']
+
     strategy['report'] = {
         'success': True,
-        'details': {'Execution time': time.time() - global_start}
+        'details': {'Execution time': time.time() - global_start, 'Number of new entries': n_new_entries}
     }
     log.close_logger(logger)
     return strategy
