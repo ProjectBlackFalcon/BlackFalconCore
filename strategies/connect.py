@@ -47,7 +47,8 @@ def connect(**kwargs):
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'connected' in listener.game_state.keys() and 'api_outdated' in listener.game_state.keys():
-            if listener.game_state['connected'] or listener.game_state['api_outdated']:
+            if 'pos' in listener.game_state.keys() or listener.game_state['api_outdated']:
+                # Actually wait for the map to load and not just a connection confirmation
                 waiting = False
         time.sleep(0.05)
     execution_time = time.time() - start
