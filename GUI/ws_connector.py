@@ -39,13 +39,7 @@ class Connection:
             self.logger.error("Websocket at {} closed unexpectedly".format(self.connection_string))
             logger.close_logger(self.logger)
 
-    def keep_alive(self):
-        while 1:
-            self.connection.send("0 0 0 1 0\n\0")
-            time.sleep(15)
-
     def on_open(self):
-        # Thread(target=self.keep_alive).start()
         self.logger.info('Connection established to websocket at ' + self.connection_string + ', ready to send orders')
 
         def run(queue):
