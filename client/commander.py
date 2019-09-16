@@ -5,17 +5,14 @@ from random import randint
 import socket
 import queue
 from threading import Thread
-from subprocess import Popen, PIPE
+from subprocess import Popen
 import time
-
-import datetime
 
 from tools.ws_connector import Connection
 from client.listener import Listener
-from tools import logger, discord_bot
+from tools import logger
 import strategies
 import hashlib
-from credentials import credentials
 
 
 class Commander:
@@ -133,29 +130,33 @@ class Commander:
         return result
 
     def interrupts(self):
-        last_file_request_message = 0
-        while 1:
-            time.sleep(0.1)
-            if self.listener.game_state['file_request_message']['timestamp'] != last_file_request_message:
-                last_file_request_message = self.listener.game_state['file_request_message']['timestamp']
+        try:
+            last_file_request_message = 0
+            while 1:
+                time.sleep(0.1)
+                if self.listener.game_state['file_request_message']['timestamp'] != last_file_request_message:
+                    self.logger.log('Interruption detected: check file message')
+                    last_file_request_message = self.listener.game_state['file_request_message']['timestamp']
 
-                file_name_hash = hashlib.md5(self.listener.game_state['file_request_message']['filename'].encode('utf-8')).hexdigest()
+                    file_name_hash = hashlib.md5(self.listener.game_state['file_request_message']['filename'].encode('utf-8')).hexdigest()
 
-                if self.listener.game_state['file_request_message']['type'] == 0:
-                    value = self.assets['hashes_and_sizes'][self.listener.game_state['file_request_message']['filename'].split('/')[-1].replace('.', '')]['size']
-                else:
-                    value = self.assets['hashes_and_sizes'][self.listener.game_state['file_request_message']['filename'].split('/')[-1].replace('.', '')]['md5']
+                    if self.listener.game_state['file_request_message']['type'] == 0:
+                        value = self.assets['hashes_and_sizes'][self.listener.game_state['file_request_message']['filename'].split('/')[-1].replace('.', '')]['size']
+                    else:
+                        value = self.assets['hashes_and_sizes'][self.listener.game_state['file_request_message']['filename'].split('/')[-1].replace('.', '')]['md5']
 
-                order = {
-                    "command": "check_file_message",
-                    "parameters": {
-                        "filenameHash": file_name_hash,
-                        "type": self.listener.game_state['file_request_message']['type'],
-                        "value": value
+                    order = {
+                        "command": "check_file_message",
+                        "parameters": {
+                            "filenameHash": file_name_hash,
+                            "type": self.listener.game_state['file_request_message']['type'],
+                            "value": value
+                        }
                     }
-                }
-                self.orders_queue.put((json.dumps(order),))
-                discord_bot.DiscordMessageSender(f'[{datetime.datetime.fromtimestamp(time.time())}] Received check file message').run(credentials['discord']['token'])
+                    self.orders_queue.put((json.dumps(order),))
+        except:
+            self.logger.error('Interrupt thread crashed')
+            self.logger.error(traceback.format_exc())
 
 
 if __name__ == '__main__':
