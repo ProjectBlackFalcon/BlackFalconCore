@@ -438,6 +438,7 @@ def log_prices(object_type, data, server, sampling_time):
         raise Exception('Type must be "item" or "resource", got {}'.format(object_type))
     conn.commit()
     conn.close()
+    return len(objects)
 
 
 if __name__ == '__main__':
