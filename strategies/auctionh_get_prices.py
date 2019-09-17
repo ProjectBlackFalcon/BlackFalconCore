@@ -178,7 +178,7 @@ def auctionh_get_prices(**kwargs):
 
                 results[item_id] = {
                     'item_name': assets['id_2_names'][str(item_id)],
-                    'items_stats': listener.game_state['auction_house_info']['item_selected']
+                    'items_stats': listener.game_state['auction_house_info']['actual_item_selected']
                 }
 
     if all:

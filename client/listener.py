@@ -19,7 +19,7 @@ class Listener:
         self.assets = assets
         self.logger = logger.get_logger(__name__, bot['name'])
         self.output_queue = Queue()
-        self._game_state = {
+        self.default_game_state = {
             'name': bot['name'],
             'id': bot['id'],
             'username': bot['username'],
@@ -45,6 +45,7 @@ class Listener:
             'auction_house_info': [],
             'achievement_available': []
         }
+        self._game_state = json.loads(json.dumps(self.default_game_state))
         self.game_state = json.loads(json.dumps(self._game_state))
         self.messages_queue = []
 
@@ -113,6 +114,10 @@ class Listener:
             if data['message'] == 'CharacterLoadingCompleteMessage':
                 self._game_state['connected'] = True
                 Thread(target=support_functions.update_profile, args=(self._game_state['name'], 'connected', True)).start()
+
+            if data['message'] == 'SystemMessageDisplayMessage':
+                if 'content' in data.keys() and 'hangUp' in data['content'].keys() and data['content']['hangUp']:
+                    self._game_state = json.loads(json.dumps(self.default_game_state))
 
             if data['message'] == 'IdentificationFailedForBadVersionMessage':
                 self._game_state['api_outdated'] = True
@@ -300,6 +305,7 @@ class Listener:
                     self._game_state['auction_house_info']['items_available'] = data['content']['typeDescription']
 
             if data['message'] == 'ExchangeTypesItemsExchangerDescriptionForUserMessage':
+                # Used to properly register changes in item selection
                 if 'item_selected' not in self._game_state['auction_house_info'].keys():
                     self._game_state['auction_house_info']['item_selected'] = [data['content']['itemTypeDescriptions']]
 
@@ -309,6 +315,9 @@ class Listener:
                 elif data['content']['itemTypeDescriptions'] != self._game_state['auction_house_info']['item_selected'][0]:
                     del self._game_state['auction_house_info']['item_selected'][0]
                     self._game_state['auction_house_info']['item_selected'].append(data['content']['itemTypeDescriptions'])
+
+                # Used to collect th items data
+                self._game_state['auction_house_info']['actual_item_selected'] = data['content']['itemTypeDescriptions']
 
             # if data['message'] == 'ExchangeErrorMessage' and 'errorType' in data['content'].keys() and data['content']['errorType'] == 11:
             #     # Item is not for sale
