@@ -2,6 +2,7 @@ import json
 import time
 
 import strategies
+from strategies import support_functions
 from tools import logger as log
 
 
@@ -18,6 +19,15 @@ def connect(**kwargs):
     assets = kwargs['assets']
 
     logger = log.get_logger(__name__, strategy['bot'])
+
+    if support_functions.get_profile(strategy['bot'])['banned']:
+        logger.warning('{} has been banned'.format(strategy['bot']))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': 0, 'Reason': '{} has been banned'.format(strategy['bot'])}
+        }
+        log.close_logger(logger)
+        return strategy
 
     if 'connected' in listener.game_state.keys():
         if listener.game_state['connected']:
@@ -47,7 +57,7 @@ def connect(**kwargs):
     waiting = True
     while waiting and time.time() - start < timeout:
         if 'connected' in listener.game_state.keys() and 'api_outdated' in listener.game_state.keys():
-            if 'pos' in listener.game_state.keys() or listener.game_state['api_outdated']:
+            if 'pos' in listener.game_state.keys() or listener.game_state['api_outdated'] or listener.game_state['banned']:
                 # Actually wait for the map to load and not just a connection confirmation
                 waiting = False
         time.sleep(0.05)
@@ -67,6 +77,15 @@ def connect(**kwargs):
         strategy['report'] = {
             'success': False,
             'details': {'Execution time': execution_time, 'Reason': 'Your BlackFalconAPI is outdated. Try to get the latest one or contact the BlackFalcon team if you already have the latest version'}
+        }
+        log.close_logger(logger)
+        return strategy
+
+    if listener.game_state['banned']:
+        logger.warn('{} has been banned'.format(strategy['bot']))
+        strategy['report'] = {
+            'success': False,
+            'details': {'Execution time': execution_time, 'Reason': '{} has been banned'.format(strategy['bot'])}
         }
         log.close_logger(logger)
         return strategy

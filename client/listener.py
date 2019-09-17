@@ -28,6 +28,7 @@ class Listener:
             'connected': False,
             'sub_end': 0,
             'api_outdated': False,
+            'banned': False,
             'npc_dialog_open': False,
             'npc_current_question': None,
             'npc_possible_replies': None,
@@ -336,3 +337,12 @@ class Listener:
 
             if data['message'] == 'AchievementRewardSuccessMessage':
                 self._game_state['achievement_available'] = []
+
+            if data['message'] == 'AccountLoggingKickedMessage':
+                support_functions.update_profile(self.game_state['name'], 'banned', True)
+                self.stop = True
+
+            if data['message'] == 'IdentificationFailedMessage':
+                if 'reason' in data['content'].keys() and data['content']['reason'] == 3:
+                    support_functions.update_profile(self.game_state['name'], 'banned', True)
+                    self._game_state['banned'] = True
