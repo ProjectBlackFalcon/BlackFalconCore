@@ -404,7 +404,7 @@ def log_prices(object_type, data, server, sampling_time):
     if object_type == 'item':
         objects = []
         for item_id, item in list(data.items()):
-            for object in item['items_stats'][0]:
+            for object in item['items_stats']:
                 formatted_object = (
                     item_id,
                     server,
@@ -422,7 +422,7 @@ def log_prices(object_type, data, server, sampling_time):
     elif object_type == 'resource':
         objects = []
         for item_id, item in list(data.items()):
-            for object in item['items_stats'][0]:
+            for object in item['items_stats']:
                 formatted_object = (
                     item_id,
                     'Julith',
