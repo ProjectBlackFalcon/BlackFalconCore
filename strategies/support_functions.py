@@ -159,6 +159,28 @@ def update_profile(bot_name, key, new_value):
     update_profile_full(bot_name, profile, client=client)
 
 
+def get_account(username, client=None):
+    if client is None:
+        client = mongo_client()
+    account = client.blackfalcon.account.find_one({'username': username})
+    if account is None:
+        raise Exception('Account does not exist.')
+    return account
+
+
+def update_account_full(username, new_account, client=None):
+    if client is None:
+        client = mongo_client()
+    client.blackfalcon.account.replace_one({'username': username}, new_account)
+
+
+def update_account(username, key, new_value):
+    client = mongo_client()
+    account = get_account(username, client=client)
+    account[key] = new_value
+    update_account_full(username, account, client=client)
+
+
 def get_known_zaaps(bot_name):
     client = mongo_client()
     return client.blackfalcon.bots.find_one({'name': bot_name})['known_zaaps']
