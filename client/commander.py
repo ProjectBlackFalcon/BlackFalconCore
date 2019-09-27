@@ -135,7 +135,7 @@ class Commander:
             while 1:
                 time.sleep(0.1)
                 if self.listener.game_state['file_request_message']['timestamp'] != last_file_request_message:
-                    self.logger.log('Interruption detected: check file message')
+                    self.logger.info('Interruption detected: check file message')
                     last_file_request_message = self.listener.game_state['file_request_message']['timestamp']
 
                     file_name_hash = hashlib.md5(self.listener.game_state['file_request_message']['filename'].encode('utf-8')).hexdigest()
