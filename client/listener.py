@@ -348,9 +348,11 @@ class Listener:
                     support_functions.update_profile(self.game_state['name'], 'banned', True)
                     support_functions.update_account(self.game_state['username'], 'status', 'banned')
                     self._game_state['banned'] = True
+                    self.stop = True
 
             if data['message'] == 'IdentificationFailedBannedMessage':
                 if 'reason' in data['content'].keys() and data['content']['reason'] == 3:
                     support_functions.update_profile(self.game_state['name'], 'banned', True)
                     support_functions.update_account(self.game_state['username'], 'status', 'banned')
                     self._game_state['banned'] = True
+                    self.stop = True
