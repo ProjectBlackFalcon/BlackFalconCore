@@ -12,7 +12,7 @@ def get_logger(file_name, bot_name):
     :param bot_name: The name of the bot running
     :return: A logger object
     """
-    logger = logging.getLogger(file_name)
+    logger = logging.getLogger(file_name + ' ' + bot_name)
     logger.setLevel(logging.DEBUG)
     if 'logs' not in os.listdir(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets'))):
         os.makedirs(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets', 'logs')))
