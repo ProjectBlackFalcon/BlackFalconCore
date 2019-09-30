@@ -171,7 +171,7 @@ def auctionh_get_prices(**kwargs):
                     logger.warn('Failed to select item')
                     strategy['report'] = {
                         'success': False,
-                        'details': {'Execution time': execution_time, 'Reason': 'Failed to select item'}
+                        'details': {'Execution time': execution_time, 'Reason': 'Failed to select item {}/{}'.format(item_id, assets['id_2_names'][str(item_id)])}
                     }
                     log.close_logger(logger)
                     return strategy
