@@ -1,7 +1,7 @@
 import logging
-from logging.handlers import RotatingFileHandler
 import sys
-import os
+import logstash
+from credentials import credentials
 
 
 def get_logger(file_name, bot_name):
@@ -14,11 +14,9 @@ def get_logger(file_name, bot_name):
     """
     logger = logging.getLogger(file_name + ' ' + bot_name)
     logger.setLevel(logging.DEBUG)
-    if 'logs' not in os.listdir(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets'))):
-        os.makedirs(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets', 'logs')))
-    handler = RotatingFileHandler(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets', 'logs', '{}.log'.format(bot_name))), maxBytes=500000000, backupCount=1)
-    formatter = logging.Formatter('%(asctime)s [%(created).0f]   %(levelname)s - %(name)s - %(message)s')
-    handler.setFormatter(formatter)
+
+    handler = logstash.LogstashHandler(credentials['logstash']['host'], credentials['logstash']['port'], version=1)
+
     logger.addHandler(handler)
     logger.addHandler(logging.StreamHandler(sys.stdout))
     return logger
