@@ -18,7 +18,7 @@ from strategies import support_functions
 from strategies import *
 from client.commander import Commander
 from tools import logger
-from tools.discord_bot import DiscordMessageSender
+from tools.discord_bot import send_discord_message
 import assets_downloader
 from credentials import credentials
 
@@ -120,7 +120,6 @@ class SwarmNode:
             intercept_command = False
 
             if 'command' in message.keys() and message['command'] == 'new_bot':
-                intercept_command = True
                 self.logger.info('Creating new bot : ' + str(message['parameters']))
                 try:
                     strategies.support_functions.create_profile(
@@ -134,6 +133,7 @@ class SwarmNode:
                     message['success'] = True
                     message['details'] = {}
                     self.api.send_message(client, json.dumps(message))
+                    return
                 except Exception as e:
                     if e.args[0] == 'Bot already exists. Delete it using the \'delete_bot\' command first.':
                         self.logger.warn('Failed creating : ' + str(message['bot']))
@@ -238,7 +238,7 @@ def swarm_node_bootstrapper():
     try:
         SwarmNode(host='0.0.0.0')
     except Exception:
-        DiscordMessageSender(f'[{datetime.datetime.fromtimestamp(time.time())}] Swarm node crashed \n`{traceback.format_exc()}`').run(credentials['discord']['token'])
+        send_discord_message(f'[{datetime.datetime.fromtimestamp(time.time())}] Swarm node crashed \n`{traceback.format_exc()}`')
         raise
 
 
