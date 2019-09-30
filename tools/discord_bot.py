@@ -1,18 +1,12 @@
-import discord
-import asyncio
+import os
 from credentials import credentials
+from subprocess import Popen, PIPE
 
 
-class DiscordMessageSender(discord.Client):
-    def __init__(self, message, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.message = message
-
-    async def on_ready(self):
-        channel = self.get_channel(384760673629896714)
-        await channel.send(self.message)
-        await self.close()
+def send_discord_message(message):
+    sh_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'discord.sh'))
+    Popen('''bash {} --webhook-url={} --text "{}"'''.format(sh_path, credentials['discord']['webhook'], message), shell=True, stdout=PIPE)
 
 
 if __name__ == '__main__':
-    DiscordMessageSender('Test').run(credentials['discord']['token'])
+    send_discord_message('Python integration test')
