@@ -341,6 +341,7 @@ class Listener:
             if data['message'] == 'AccountLoggingKickedMessage':
                 support_functions.update_profile(self.game_state['name'], 'banned', True)
                 support_functions.update_account(self.game_state['username'], 'status', 'banned')
+                self._game_state['banned'] = True
                 self.stop = True
 
             if data['message'] == 'IdentificationFailedMessage':
