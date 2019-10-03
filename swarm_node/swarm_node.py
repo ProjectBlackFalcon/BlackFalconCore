@@ -26,8 +26,10 @@ from credentials import credentials
 class SwarmNode:
     def __init__(self, host):
         self.logger = logger.get_logger(__name__, 'swarm_node')
+        self.assets_paths = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets'))
         self.assets = {}
         self.load_assets()
+        Thread(target=self.maintain_assets).start()
         self.host = host
         self.api_port = 8721
         self.api = WebsocketServer(self.api_port, host=self.host)
@@ -46,10 +48,9 @@ class SwarmNode:
     def load_assets(self):
         start = time.time()
         assets_downloader.update_assets()
-        assets_paths = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets'))
         files_packs = {}
         self.logger.info('Mapping static assets')
-        for file in os.listdir(assets_paths):
+        for file in os.listdir(self.assets_paths):
             if file.endswith('.json'):
                 if file.replace('.json', '').split('_')[-1].isdigit():
                     if '_'.join(file.replace('.json', '').split('_')[:-1]) not in files_packs.keys():
@@ -60,11 +61,29 @@ class SwarmNode:
                     files_packs[file.replace('.json', '')] = [file]
 
         self.logger.info('Loading static assets...')
+        self.load_assets_list(files_packs)
+        self.logger.info('Done loading assets in {}s'.format(round(time.time() - start, 2)))
+
+    def build_files_packs_from_assets_names(self, assets_names):
+        files_packs = {}
+        for assset_name in assets_names:
+            for file in os.listdir(self.assets_paths):
+                if file.endswith('.json') and assset_name in file:
+                    if file.replace('.json', '').split('_')[-1].isdigit():
+                        if '_'.join(file.replace('.json', '').split('_')[:-1]) not in files_packs.keys():
+                            files_packs['_'.join(file.replace('.json', '').split('_')[:-1])] = [file]
+                        else:
+                            files_packs['_'.join(file.replace('.json', '').split('_')[:-1])].append(file)
+                    else:
+                        files_packs[file.replace('.json', '')] = [file]
+        return files_packs
+
+    def load_assets_list(self, files_packs):
         for asset_name, file_pack in files_packs.items():
             self.logger.info('Loading asset: {}'.format(asset_name))
-            if len(file_pack) <= 4:
+            if len(file_pack) <= 20:
                 for file in file_pack:
-                    with open(assets_paths + '/' + file, 'r', encoding='utf8') as f:
+                    with open(self.assets_paths + '/' + file, 'r', encoding='utf8') as f:
                         data = json.load(f)
                     if asset_name not in self.assets.keys():
                         self.assets[asset_name] = data
@@ -75,7 +94,7 @@ class SwarmNode:
                             self.assets[asset_name].update(data)
             else:
                 with Pool(cpu_count() - 1) as p:
-                    results_list = p.map(self.load_asset_chunk, [assets_paths + '/' + file_name for file_name in file_pack])
+                    results_list = p.map(self.load_asset_chunk, [self.assets_paths + '/' + file_name for file_name in file_pack])
                 for asset_chunk in results_list:
                     if asset_name not in self.assets.keys():
                         self.assets[asset_name] = asset_chunk
@@ -84,7 +103,32 @@ class SwarmNode:
                             self.assets[asset_name] += asset_chunk
                         elif type(asset_chunk) is dict:
                             self.assets[asset_name].update(asset_chunk)
-        self.logger.info('Done loading assets in {}s'.format(round(time.time() - start, 2)))
+
+    def maintain_assets(self):
+        self.logger.info('Assets maintainer starting')
+        try:
+            while 1:
+                time.sleep(60)
+                updated_files = assets_downloader.update_assets()
+                updated_assets = set()
+                for file in updated_files:
+                    if file.split('_')[-1].isdigit():
+                        updated_assets.add('_'.join(file.split('_')[:-1]))
+                    else:
+                        updated_assets.add(file)
+
+                if len(updated_assets):
+                    start = time.time()
+                    self.logger.info('Updating assets: '.format(updated_assets))
+                    files_packs = self.build_files_packs_from_assets_names(updated_assets)
+                    self.load_assets_list(files_packs)
+                    self.logger.info('Done updating assets in {}s'.format(round(time.time() - start, 2)))
+        except:
+            self.logger.error('Assets maintainer crashed')
+            self.logger.error(traceback.format_exc())
+            send_discord_message("Assets maintainer crashed")
+            send_discord_message("`{}`".format(traceback.format_exc()))
+            time.sleep(1)
 
     def load_asset_chunk(self, file_path):
         with open(file_path, 'r', encoding='utf8') as f:
@@ -238,7 +282,8 @@ def swarm_node_bootstrapper():
     try:
         SwarmNode(host='0.0.0.0')
     except Exception:
-        send_discord_message(f'[{datetime.datetime.fromtimestamp(time.time())}] Swarm node crashed \n`{traceback.format_exc()}`')
+        send_discord_message(f'[{datetime.datetime.fromtimestamp(time.time())}] Swarm node crashed')
+        send_discord_message(f'`{traceback.format_exc()}`')
         raise
 
 
