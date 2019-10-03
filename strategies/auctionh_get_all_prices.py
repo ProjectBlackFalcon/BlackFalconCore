@@ -29,7 +29,6 @@ def auctionh_get_all_prices(**kwargs):
         (3, -19),
     ]
     if listener.game_state['sub_end'] != 0 and listener.game_state['sub_end'] / 1000 - time.time() > 60 * 60 * 2:
-        # TODO: Check that the sub time left is actually in seconds
         path = [
             (-30, -60),
             (-30, -53),

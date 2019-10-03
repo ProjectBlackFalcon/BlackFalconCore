@@ -1,8 +1,10 @@
+import hashlib
 import json
 
 import time
 
 from tools import logger as log
+from tools import auction_house_data_logger as ah_log
 import strategies
 from strategies import support_functions
 
@@ -20,8 +22,10 @@ def auctionh_get_prices(**kwargs):
     assets = kwargs['assets']
 
     logger = log.get_logger(__name__, strategy['bot'])
+    ah_logger = ah_log.get_logger(__name__, strategy['bot'] + '_data')
 
     global_start, start = time.time(), time.time()
+    n_new_entries = 0
 
     sample_timestamp = int(time.time())
     if 'sample_timestamp' in strategy['parameters']:
@@ -47,6 +51,7 @@ def auctionh_get_prices(**kwargs):
                 'details': {'Execution time': time.time() - start, 'Reason': sub_strategy['report']}
             }
             log.close_logger(logger)
+            ah_log.close_logger(ah_logger)
             return strategy
 
     else:
@@ -64,6 +69,7 @@ def auctionh_get_prices(**kwargs):
                 'details': {'Execution time': time.time() - start, 'Reason': sub_strategy['report']}
             }
             log.close_logger(logger)
+            ah_log.close_logger(ah_logger)
             return strategy
 
         sub_strategy = strategies.auctionh_open.auctionh_open(
@@ -83,6 +89,7 @@ def auctionh_get_prices(**kwargs):
                 'details': {'Execution time': time.time() - start, 'Reason': sub_strategy['report']}
             }
             log.close_logger(logger)
+            ah_log.close_logger(ah_logger)
             return strategy
 
     if 'parameters' in strategy.keys() and 'general_ids_list' in strategy['parameters']:
@@ -129,7 +136,7 @@ def auctionh_get_prices(**kwargs):
         waiting = True
         while waiting and time.time() - start < timeout:
             if 'auction_house_info' in listener.game_state.keys() and 'items_available' in listener.game_state['auction_house_info']:
-                # TODO: This test is going to wrongly fail if asked to switch from a category to the same one
+                # FIXME: This test is going to wrongly fail if asked to switch from a category to the same one
                 if listener.game_state['auction_house_info']['items_available'] != previous_available_ids:
                     waiting = False
             time.sleep(0.05)
@@ -142,6 +149,7 @@ def auctionh_get_prices(**kwargs):
                 'details': {'Execution time': execution_time, 'Reason': 'Failed to change categories'}
             }
             log.close_logger(logger)
+            ah_log.close_logger(ah_logger)
             return strategy
 
         for item_id in item_ids:
@@ -161,7 +169,7 @@ def auctionh_get_prices(**kwargs):
                 waiting = True
                 while waiting and time.time() - start < timeout:
                     if 'auction_house_info' in listener.game_state.keys() and 'item_selected' in listener.game_state['auction_house_info']:
-                        # TODO: This test is going to wrongly fail if asked to switch from an item to the same one
+                        # FIXME: This test is going to wrongly fail if asked to switch from an item to the same one
                         if str(listener.game_state['auction_house_info']['item_selected'][-1]) != str(previous_available_ids):
                             waiting = False
                     time.sleep(0.05)
@@ -174,19 +182,51 @@ def auctionh_get_prices(**kwargs):
                         'details': {'Execution time': execution_time, 'Reason': 'Failed to select item {}/{}'.format(item_id, assets['id_2_names'][str(item_id)])}
                     }
                     log.close_logger(logger)
+                    ah_log.close_logger(ah_logger)
                     return strategy
 
-                results[item_id] = {
-                    'item_name': assets['id_2_names'][str(item_id)],
-                    'items_stats': listener.game_state['auction_house_info']['actual_item_selected']
-                }
+                item_name = assets['id_2_names'][str(item_id)]
+                object_type = 'item' if int(item_id) in assets['hdv_2_id']['Equipements'] else 'resource'
+                objects = listener.game_state['auction_house_info']['actual_item_selected']
+                for object in objects:
+                    if object_type == 'item':
+                        formatted_object = {
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_type': object_type,
+                            'server': listener.game_state['server'],
+                            'price_1': object['prices'][0],
+                            'price_10': object['prices'][1],
+                            'price_100': object['prices'][2],
+                            'stats': object['effects'],
+                            'hash': hashlib.sha256(str(object['effects']).encode('utf8')).hexdigest(),
+                            'sample_id': int(sample_timestamp)
+                        }
+                    if object_type == 'resource':
+                        formatted_object = {
+                            'item_id': item_id,
+                            'item_name': item_name,
+                            'item_type': object_type,
+                            'server': listener.game_state['server'],
+                            'price_1': object['prices'][0],
+                            'price_10': object['prices'][1],
+                            'price_100': object['prices'][2],
+                            'sample_id': int(sample_timestamp)
+                        }
+                    ah_logger.info(json.dumps(formatted_object, ensure_ascii=False))
+                    n_new_entries += 1
+
+                # results[item_id] = {
+                #     'item_name': assets['id_2_names'][str(item_id)],
+                #     'items_stats': listener.game_state['auction_house_info']['actual_item_selected']
+                # }
 
     if all:
         object_type = 'resource'
         if int(list(results.keys())[0]) in assets['hdv_2_id']['Equipements']:
             object_type = 'item'
 
-        n_new_entries = support_functions.log_prices(object_type, results, listener.game_state['server'], sample_timestamp)
+        # n_new_entries = support_functions.log_prices(object_type, results, listener.game_state['server'], sample_timestamp)
         strategy['report'] = {
             'success': True,
             'details': {'Execution time': time.time() - global_start, 'Number of new entries': n_new_entries}
@@ -197,4 +237,5 @@ def auctionh_get_prices(**kwargs):
             'details': {'Execution time': time.time() - global_start, 'Results': results}
         }
     log.close_logger(logger)
+    ah_log.close_logger(ah_logger)
     return strategy
