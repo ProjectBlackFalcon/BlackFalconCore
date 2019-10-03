@@ -199,7 +199,7 @@ def auctionh_get_prices(**kwargs):
                             'price_10': object['prices'][1],
                             'price_100': object['prices'][2],
                             'stats': object['effects'],
-                            'hash': hashlib.sha256(str(object['effects']).encode('utf8')).hexdigest(),
+                            'hash': hashlib.sha256((item_name + str(object['effects'])).encode('utf8')).hexdigest(),
                             'sample_id': int(sample_timestamp)
                         }
                     if object_type == 'resource':
