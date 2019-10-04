@@ -216,22 +216,12 @@ def auctionh_get_prices(**kwargs):
                     ah_logger.info(json.dumps(formatted_object, ensure_ascii=False))
                     n_new_entries += 1
 
-                # results[item_id] = {
-                #     'item_name': assets['id_2_names'][str(item_id)],
-                #     'items_stats': listener.game_state['auction_house_info']['actual_item_selected']
-                # }
+                results[item_id] = {
+                    'item_name': assets['id_2_names'][str(item_id)],
+                    'items_stats': listener.game_state['auction_house_info']['actual_item_selected']
+                }
 
-    if all:
-        object_type = 'resource'
-        if int(list(results.keys())[0]) in assets['hdv_2_id']['Equipements']:
-            object_type = 'item'
-
-        # n_new_entries = support_functions.log_prices(object_type, results, listener.game_state['server'], sample_timestamp)
-        strategy['report'] = {
-            'success': True,
-            'details': {'Execution time': time.time() - global_start, 'Number of new entries': n_new_entries}
-        }
-    else:
+    if not all:
         strategy['report'] = {
             'success': True,
             'details': {'Execution time': time.time() - global_start, 'Results': results}
