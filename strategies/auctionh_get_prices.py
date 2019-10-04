@@ -199,7 +199,7 @@ def auctionh_get_prices(**kwargs):
                             'price_10': object['prices'][1],
                             'price_100': object['prices'][2],
                             'stats': object['effects'],
-                            'hash': hashlib.sha256((item_name + str(object['effects'])).encode('utf8')).hexdigest(),
+                            'hash': hashlib.sha256((item_name + str(object['effects']) + str(object['prices'][0]) + str(object['prices'][1]) + str(object['prices'][2])).encode('utf8')).hexdigest(),
                             'sample_id': int(sample_timestamp)
                         }
                     if object_type == 'resource':
@@ -221,7 +221,12 @@ def auctionh_get_prices(**kwargs):
                     'items_stats': listener.game_state['auction_house_info']['actual_item_selected']
                 }
 
-    if not all:
+    if all:
+        strategy['report'] = {
+            'success': True,
+            'details': {'Execution time': time.time() - global_start, 'Number of new entries': n_new_entries}
+        }
+    else:
         strategy['report'] = {
             'success': True,
             'details': {'Execution time': time.time() - global_start, 'Results': results}
